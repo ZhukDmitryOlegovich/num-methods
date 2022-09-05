@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Лаб №1 | Жук. Численные методы</title>
+	<link rel="shortcut icon" href="/static/favicon.png">
+	<link rel="stylesheet" href="/static/reset.css">
+	<link rel="stylesheet" href="/static/main.css">
+</head>
+
+<body>
+	<h1>Лабораторная работа №1<br>«Подготовка вспомогательных средств разработки» </h1>
+
+	<!-- Реализовать вспомогательную библиотеку для вычисления скалярного произведения, умножение матрицы на вектор, матрицы на матрицу -->
+	<script src="/build/math/index.js"></script>
+
+	<!-- Проверить корректность работы с помощью сторонних библиотек -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.1.0/math.min.js" integrity="sha512-xOu54cGoQRU4PxCzB268p5N3MPvH4EHtoQjdw7y0qlkKyMvS5D9IsYFPP0NDtrky7SqBntN8cPtl0kx+UKrBgg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script type="module" src="/build/lab1/testMatrix.js"></script>
+	
+	<!-- Реализовать оценку погрешности вычисления шара при различных значениях корней из 2 -->
+	<div id="lab1-testcircle"></div>
+	<script src="/build/lab1/testCircle.js"></script>
+	
+	<!-- Реализовать вывод графиков произвольных двумерных функций -->
+	<script src="https://unpkg.com/function-plot/dist/function-plot.js"></script>
+	<div id="lab1-testplot"></div>
+	<script src="/build/lab1/testPlot.js"></script>
+</body>
+
+</html>

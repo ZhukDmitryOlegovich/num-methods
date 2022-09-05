@@ -1,0 +1,135 @@
+:root {
+	--draw-container-border-width: 2px;
+	--add-element-margin: 4px;
+	--draw-container-height: 800px;
+
+	--figures-height-delta: calc(100px + var(--draw-container-border-width));
+}
+
+body {
+	background-color: #b8b8b8;
+}
+
+.wrap-row {
+	display: flex;
+	flex-flow: row nowrap;
+}
+
+tt {
+	font-family: "Lucida Console", "Menlo", "Monaco", "Courier New", monospace;
+}
+
+.add-element {
+	margin: var(--add-element-margin);
+	width: calc(100% - 2 * var(--add-element-margin));
+	cursor: pointer;
+}
+
+.delete-element {
+	position: absolute;
+	right: 10px;
+	zoom: 0.8;
+	cursor: pointer;
+}
+
+.delete-element:hover {
+	background-color: rgb(255, 0, 0);
+}
+
+.right-bar {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	user-select: none;
+	width: 263px; /* todo: wtf ? */
+}
+
+.application {
+	height: calc(var(--draw-container-height) + 2 * var(--draw-container-border-width));
+}
+
+#draw-container {
+	border: var(--draw-container-border-width) solid black;
+	width: 800px;
+	height: var(--draw-container-height);
+}
+
+.block-info {
+	margin: 4px;
+	padding: 4px 10px;
+	border-radius: 2px;
+	background-color: white;
+	width: calc(238px - 2 * 10px);
+	position: relative;
+}
+
+.block-mobius-info {
+	margin: 4px 0;
+	padding: 4px 4px;
+	background-color: #e4e4e4;
+	border-radius: 2px;
+}
+
+.block-mobius-info .left {
+	min-width: 71px;
+	display: inline-block;
+}
+
+#figures {
+	flex: 0 1 auto;
+	background-color: #ff00001c;
+	overflow-y: scroll;
+	height: 25%;
+	min-height: var(--figures-height-delta);
+	max-height: calc(100% - var(--figures-height-delta));
+	resize: vertical;
+}
+
+#tranzit {
+	flex: 1 1000 auto;
+	background-color: #00ff151c;
+	overflow-y: scroll;
+}
+
+#figures > .block-info[data-chosen]:not([data-chosen='Circle']) > .need-disabled {
+	display: none;
+}
+
+.fail-mobius {
+	background-color: #ff5e5e;
+	border-radius: 4px;
+}
+
+.fail-mobius > input {
+	background-color: #ff5e5e;
+}
+
+#tranzit > .block-info[data-chosen='inverse'] > .need-disabled {
+	display: none;
+}
+
+#tranzit > .block-info[data-chosen]:not([data-chosen='Mobius']) > .need-mobius {
+	display: none;
+}
+
+#tranzit > .block-info[data-chosen='Mobius'] > p:not(.with-select, .need-mobius) {
+	display: none;
+}
+
+#left, #right, #stop-start, #refresh {
+	width: 35px;
+}
+
+#refresh {
+	margin: 2px;
+}
+
+table, th, td {
+	border: 1px solid black;
+	border-collapse: separate;
+	border-spacing: 2px;
+}
+
+th, td {
+	padding: 4px;
+}
