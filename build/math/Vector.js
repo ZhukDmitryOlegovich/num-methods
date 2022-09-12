@@ -8,7 +8,7 @@ export class Vector extends Matrix {
         return new Vector(matrix.matrix[0]);
     }
     scalar(other) {
-        return this.transpose().mul(other).matrix[0];
+        return this.transpose().mul(other).matrix[0][0];
     }
     norma() {
         return this.scalar(this);

@@ -1,7 +1,7 @@
 /* eslint-disable no-useless-constructor, import/prefer-default-export */
 
 import type { FixedArr, SimpleMatrix } from './types';
-import { fromLength, sumArr } from './utils';
+import { fromLength, map, sumArr } from './utils';
 
 /**
  * A = Height \
@@ -72,5 +72,9 @@ export class Matrix<A extends number, B extends number> {
 				),
 			),
 		);
+	}
+
+	mulN(other: number): Matrix<A, B> {
+		return new Matrix<A, B>(map(this.matrix, (a) => map(a, (x) => x * other)));
 	}
 }

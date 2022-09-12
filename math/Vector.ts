@@ -13,7 +13,7 @@ export class Vector<A extends number> extends Matrix<A, 1> {
 	}
 
 	scalar(other: Vector<A>) {
-		return this.transpose().mul(other).matrix[0];
+		return this.transpose().mul(other).matrix[0][0];
 	}
 
 	norma() {

@@ -24,18 +24,23 @@ const SQRT = '√';
         ['17 / 12', 17 / 12],
     ];
     const functions = [
-        [`(${SQRT}2 - 1)^6`, (s2) => (s2 - 1) ** 6],
-        [`(3 - 2${SQRT}2)^3`, (s2) => (3 - 2 * s2) ** 3],
-        [`99 - 70${SQRT}2`, (s2) => 99 - 70 * s2],
+        [`(${SQRT}2 - 1)^6`, (s2) => (s2 - 1) ** 6, (s2) => 6 * (s2 - 1) ** 5],
+        [`(3 - 2${SQRT}2)^3`, (s2) => (3 - 2 * s2) ** 3, (s2) => -6 * (3 - 2 * s2) ** 2],
+        [`99 - 70${SQRT}2`, (s2) => 99 - 70 * s2, () => -70],
     ];
     // from https://www.wolframalpha.com/input?i=%28sqrt%282%29-1%29%5E6
     const origin = 0.0050506338833465838817893053211345001229687236136348776324183406;
     node.appendChild(createTable([
         ['', ...functions.map(([name]) => name)],
-        ...approximate.map(([name, s2]) => [name, ...functions.map(([, f]) => {
+        ...approximate.map(([name, s2]) => [name, ...functions.map(([, f, f2]) => {
                 const res = f(s2);
-                const diff = res - origin;
-                return [res, `(${diff > 0 ? '+' : ''}${(diff / origin * 100).toPrecision(5)}%)`];
+                const diff = (res - origin) / origin * 100;
+                const diff2 = f2(Math.SQRT2) * Math.abs(Math.SQRT2 - s2) / origin * 100;
+                return [
+                    res,
+                    `(${diff > 0 ? '+' : ''}${diff.toPrecision(5)}%)`,
+                    `(${diff2 > 0 ? '+' : ''}${diff2.toPrecision(5)}%)`,
+                ];
             })]),
     ]));
 })();

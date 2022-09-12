@@ -1,5 +1,5 @@
 /* eslint-disable no-useless-constructor, import/prefer-default-export */
-import { fromLength, sumArr } from './utils.js';
+import { fromLength, map, sumArr } from './utils.js';
 /**
  * A = Height \
  * B = Width \
@@ -38,5 +38,8 @@ export class Matrix {
     }
     mul(other) {
         return new Matrix(fromLength(other.countColons(), (i) => fromLength(this.countRows(), (j) => other.matrix[i].reduce((accum, _, k) => accum + this.matrix[k][j] * other.matrix[i][k], 0))));
+    }
+    mulN(other) {
+        return new Matrix(map(this.matrix, (a) => map(a, (x) => x * other)));
     }
 }
