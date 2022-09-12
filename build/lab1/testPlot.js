@@ -1,4 +1,4 @@
-import functionPlot from 'function-plot';
+/* import functionPlot from 'function-plot'; */
 (() => {
     const node = document.getElementById('lab1-testplot');
     if (!node) {

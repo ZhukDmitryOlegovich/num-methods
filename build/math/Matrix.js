@@ -1,5 +1,5 @@
 /* eslint-disable no-useless-constructor, import/prefer-default-export */
-import { fromLength, sumArr } from './utils';
+import { fromLength, sumArr } from './utils.js';
 /**
  * A = Height \
  * B = Width \
