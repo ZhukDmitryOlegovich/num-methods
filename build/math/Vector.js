@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import { Matrix } from './Matrix.js';
+import { Matrix } from './Matrix';
 export class Vector extends Matrix {
     constructor(vector) {
         super([vector]);

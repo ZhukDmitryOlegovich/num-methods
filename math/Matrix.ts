@@ -1,17 +1,35 @@
 /* eslint-disable no-useless-constructor, import/prefer-default-export */
 
-import type { FixedArr } from './types';
+import type { FixedArr, SimpleMatrix } from './types';
 import { fromLength, sumArr } from './utils';
 
-type SimpleMatrix<A extends number, B extends number> = FixedArr<B, FixedArr<A, number>>;
-
+/**
+ * A = Height \
+ * B = Width \
+ * A x B = Height x Width
+ */
 export class Matrix<A extends number, B extends number> {
 	constructor(public matrix: SimpleMatrix<A, B>) { /* empty */ }
 
+	clone(): Matrix<A, B> {
+		return new Matrix<A, B>(
+			fromLength(
+				this.countColons(),
+				(i) => [...this.colon(i)] as any as FixedArr<A, number>,
+			),
+		);
+	}
+
+	/**
+	 * @return Height
+	 */
 	countRows(): A {
 		return this.matrix[0].length;
 	}
 
+	/**
+	 * @return Width
+	 */
 	countColons(): B {
 		return this.matrix.length;
 	}

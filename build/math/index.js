@@ -1,2 +1,3 @@
-export { Matrix } from './Matrix.js';
-export { Vector } from './Vector.js';
+export { Matrix } from './Matrix';
+export { SquareMatrix } from './SquareMatrix';
+export { Vector } from './Vector';

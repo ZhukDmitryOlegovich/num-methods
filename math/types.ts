@@ -12,3 +12,5 @@ export type NotUnion<U> = IsUnion<U> extends true ? never : U;
 
 export type FixedArr<Length extends number, T> = Omit<readonly T[], 'length'>
 	& { length: NotUnion<NotAbstract<number, Length>>; };
+
+export type SimpleMatrix<A extends number, B extends number> = FixedArr<B, FixedArr<A, number>>;

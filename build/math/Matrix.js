@@ -1,12 +1,26 @@
 /* eslint-disable no-useless-constructor, import/prefer-default-export */
-import { fromLength, sumArr } from './utils.js';
+import { fromLength, sumArr } from './utils';
+/**
+ * A = Height \
+ * B = Width \
+ * A x B = Height x Width
+ */
 export class Matrix {
     constructor(matrix) {
         this.matrix = matrix;
     }
+    clone() {
+        return new Matrix(fromLength(this.countColons(), (i) => [...this.colon(i)]));
+    }
+    /**
+     * @return Height
+     */
     countRows() {
         return this.matrix[0].length;
     }
+    /**
+     * @return Width
+     */
     countColons() {
         return this.matrix.length;
     }
