@@ -25,16 +25,19 @@ import { fromLength } from '@/math/utils';
 	const inputA = document.createElement('input');
 	inputA.type = 'number';
 	inputA.placeholder = 'a';
+	inputA.valueAsNumber = -1;
 	div2.appendChild(inputA);
 
 	const inputB = document.createElement('input');
 	inputB.type = 'number';
 	inputB.placeholder = 'b';
+	inputB.valueAsNumber = 1;
 	div2.appendChild(inputB);
 
 	const inputC = document.createElement('input');
 	inputC.type = 'number';
 	inputC.placeholder = 'с';
+	inputC.value = '1e-5';
 	div2.appendChild(inputC);
 
 	const button2 = document.createElement('button');
@@ -103,15 +106,26 @@ import { fromLength } from '@/math/utils';
 		const x2 = b;
 		const b2 = Vector.fromMatrix(a.mul(x2));
 
-		p.innerText = JSON.stringify(x);
-		p.innerHTML += '<br>';
-		p.innerText += JSON.stringify(Vector.fromMatrix(a.mul(x).add(b.mulN(-1))).norma());
-		p.innerHTML += '<br>';
-		p.innerText += JSON.stringify(b2);
-		p.innerHTML += '<br>';
-		p.innerText += JSON.stringify(
+		p.innerText = '';
+
+		[
+			x,
+			Vector.fromMatrix(a.mul(x).add(b.mulN(-1))).norma(),
+			'',
+			b2,
 			Vector.fromMatrix(a.eliminationGaussian(b2).add(x2.mulN(-1))).norma(),
-		);
+		].forEach((value) => {
+			p.innerText += JSON.stringify(value);
+			p.innerHTML += '<br>';
+		});
 	};
 	div2.appendChild(button);
+
+	const buttonAnd = document.createElement('button');
+	buttonAnd.innerText = 'Сгенерить & Посчитать';
+	buttonAnd.onclick = () => {
+		button2.click();
+		button.click();
+	};
+	div2.appendChild(buttonAnd);
 })();
