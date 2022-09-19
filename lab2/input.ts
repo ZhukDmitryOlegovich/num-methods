@@ -107,7 +107,7 @@ import { fromLength } from '@/math/utils';
 		p.innerHTML += '<br>';
 		p.innerText += JSON.stringify(Vector.fromMatrix(a.mul(x).add(b.mulN(-1))).norma());
 		p.innerHTML += '<br>';
-		p.innerText = JSON.stringify(b2);
+		p.innerText += JSON.stringify(b2);
 		p.innerHTML += '<br>';
 		p.innerText += JSON.stringify(
 			Vector.fromMatrix(a.eliminationGaussian(b2).add(x2.mulN(-1))).norma(),
