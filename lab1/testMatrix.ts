@@ -7,6 +7,6 @@ console.log(JSON.stringify(
 	math.multiply(math.matrix([[1, 2], [3, 4]]), math.matrix([[1.2, -7.2], [1.5, 7.8]])).toArray(),
 ));
 console.log(JSON.stringify(
-	new Matrix([[1, 2] as const, [3, 4] as const] as const)
-		.mul(new Matrix([[1.2, -7.2] as const, [1.5, 7.8] as const] as const)).matrix,
+	new Matrix([[1, 2], [3, 4]] as const)
+		.mul(new Matrix([[1.2, -7.2], [1.5, 7.8]] as const)).matrix,
 ));

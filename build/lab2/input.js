@@ -51,23 +51,26 @@ import { fromLength } from '../math/utils.js';
     };
     const p = document.createElement('p');
     div.appendChild(p);
-    const p2 = document.createElement('p');
-    div.appendChild(p2);
     node.appendChild(div);
     const button = document.createElement('button');
     button.innerText = 'Посчитать';
     button.onclick = () => {
         const numbers = textarea.value.match(/\S+/g)?.map(Number).filter((e) => !Number.isNaN(e));
         if (numbers?.length !== currentSize * (currentSize + 1)) {
-            console.error(`Ожидалось ${currentSize * (currentSize + 1)}, а полученно ${numbers?.length}`);
+            console.error(p.innerHTML = `<font color="red">Ожидалось ${currentSize * (currentSize + 1)}, а полученно ${numbers?.length}</font>`);
             return;
         }
         const arrNumbers = fromLength(currentSize + 1, (i) => numbers.slice(i * currentSize, (i + 1) * currentSize));
         const a = new SquareMatrix(arrNumbers.slice(0, currentSize));
         const b = new Vector(arrNumbers[currentSize]);
         const x = a.eliminationGaussian(b);
+        const x2 = b;
+        const b2 = Vector.fromMatrix(a.mul(x2));
         p.innerText = JSON.stringify(x);
-        p2.innerText = JSON.stringify(Vector.fromMatrix(a.mul(x).add(b.mulN(-1))).norma());
+        p.innerHTML += '<br>';
+        p.innerText += JSON.stringify(Vector.fromMatrix(a.mul(x).add(b.mulN(-1))).norma());
+        p.innerHTML += '<br>';
+        p.innerText += JSON.stringify(Vector.fromMatrix(a.eliminationGaussian(b2).add(x2.mulN(-1))).norma());
     };
     div2.appendChild(button);
 })();
