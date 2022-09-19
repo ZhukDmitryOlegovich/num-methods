@@ -3,12 +3,9 @@
 	"version": "1.0.0",
 	"description": "",
 	"scripts": {
-		"test": "npx ts-node ./math/test.ts",
-		"server": "npx node ./server/server.js",
+		"server": "npx http-server",
 		"start": "npm run server",
-		"old:build": "rm -rf ./build && npx tsc && npx node ./server/afterbuild.js",
-		"build": "npx tsc && npx node ./server/afterbuild.js",
-		"restart": "time npm run build"
+		"build": "npx tsc && npx node ./server/afterbuild.js"
 	},
 	"author": "Zhuk Dmitry",
 	"license": "ISC",

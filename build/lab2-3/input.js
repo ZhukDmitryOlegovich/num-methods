@@ -44,8 +44,8 @@ import { fromLength } from '../math/utils.js';
 14 
 32 
 51`;
-    textarea.style.width = '600px';
-    textarea.style.height = '120px';
+    textarea.style.width = '900px';
+    textarea.style.height = '300px';
     div.appendChild(textarea);
     button2.onclick = () => {
         textarea.value = '';
@@ -66,20 +66,38 @@ import { fromLength } from '../math/utils.js';
         const arrNumbers = fromLength(currentSize + 1, (i) => numbers.slice(i * currentSize, (i + 1) * currentSize));
         const a = new SquareMatrix(arrNumbers.slice(0, currentSize));
         const b = new Vector(arrNumbers[currentSize]);
-        const x = a.eliminationGaussian(b);
         const x2 = b;
         const b2 = Vector.fromMatrix(a.mul(x2));
-        p.innerText = '';
+        p.innerHTML = '';
         [
-            x,
-            Vector.fromMatrix(a.mul(x).add(b.mulN(-1))).norma(),
+            '<b>input: A, b. output: x, diff</b>',
+            ...[
+                { smartColon: false, smartRow: false },
+                { smartColon: false, smartRow: true },
+                { smartColon: true, smartRow: false },
+                { smartColon: true, smartRow: true },
+            ].flatMap((options) => {
+                const x = a.eliminationGaussian(b, options);
+                return [
+                    options,
+                    x,
+                    `<b>${Vector.fromMatrix(a.mul(x).add(b.mulN(-1))).norma().toExponential(10)}</b>`,
+                ];
+            }),
             '',
+            '<b>input: A, x. output: b, diff</b>',
             b2,
             Vector.fromMatrix(a.eliminationGaussian(b2).add(x2.mulN(-1))).norma(),
         ].forEach((value) => {
-            p.innerText += JSON.stringify(value);
+            if (typeof value === 'string') {
+                p.innerHTML += value;
+            }
+            else {
+                p.innerHTML += JSON.stringify(value);
+            }
             p.innerHTML += '<br>';
         });
+        p.innerHTML = `<code>${p.innerHTML}</code>`;
     };
     div2.appendChild(button);
     const buttonAnd = document.createElement('button');
