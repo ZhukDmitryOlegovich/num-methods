@@ -47,6 +47,7 @@ import { fromLength } from '@/math/utils';
 	node.appendChild(div2);
 
 	const div = document.createElement('div');
+	div.style.width = '100%';
 
 	const textarea = document.createElement('textarea');
 	textarea.value = `1 4 8
@@ -56,8 +57,8 @@ import { fromLength } from '@/math/utils';
 14 
 32 
 51`;
-	textarea.style.width = '900px';
-	textarea.style.height = '300px';
+	textarea.style.width = '100%';
+	textarea.style.height = '130px';
 	div.appendChild(textarea);
 
 	button2.onclick = () => {

@@ -5,7 +5,8 @@
 	"scripts": {
 		"server": "npx http-server",
 		"start": "npm run server",
-		"build": "npx tsc && npx node ./server/afterbuild.js"
+		"build": "npx tsc && npx node ./server/afterbuild.js",
+		"rebuild": "while (true) do sleep 1; npm run build; done;"
 	},
 	"author": "Zhuk Dmitry",
 	"license": "ISC",

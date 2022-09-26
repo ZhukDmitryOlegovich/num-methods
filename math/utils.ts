@@ -14,3 +14,5 @@ export const sumArr = <A extends number>(a: FixedArr<A, number>, b: FixedArr<A, 
 	a,
 	(_, i) => a[i] + b[i],
 );
+
+export const random = (from: number, to: number) => Math.random() * (to - from) + from;

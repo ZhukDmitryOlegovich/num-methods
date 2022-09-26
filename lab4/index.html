@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Лаб №4 | Жук. Численные методы</title>
+	<link rel="shortcut icon" href="../static/favicon.png">
+	<link rel="stylesheet" href="../static/reset.css">
+	<link rel="stylesheet" href="../static/main.css">
+</head>
+
+<body>
+	<div style="display: flex; align-items: center; gap: 4px;">
+		<a href="https://github.com/ZhukDmitryOlegovich/num-methods/tree/main/lab4">Ссылка на исходники</a>
+		<script>document.body.style.zoom = 1.7</script>
+		<button onclick="document.body.style.zoom -= -0.1">zoom +</button>
+		<button onclick="document.body.style.zoom -= 0.1">zoom -</button>
+		<div style="flex-grow: 1;"></div>
+		<button onclick="location.href='../lab1'">lab 1</button>
+		<button onclick="location.href='../lab2-3'">lab 2-3</button>
+		<button onclick="location.href='../lab4'">lab 4</button>
+	</div>
+	<h2>Лабораторные работы №4
+		<br>«Изучение зависимости погрешности решения линейных
+		уравнений различными модификациями метода Гаусса от
+		размера матрицы»</h2>
+
+	<!-- 
+		- Результатом работы должен быть график зависимости погрешности решения системы
+		уравнений A·x=b, где A ∈ RN×N, x ∈ RN, b ∈ RN четырьмя способами указанными в
+		описании цели работы от N. При этом для каждой модификации алгоритма необходимо
+		построить график, как для случая с диагональным преобладанием, так и для случая без
+		диагонального преобладания. В итоге должно получиться 8 графиков, 4 для случая с
+		диагональным преобладанием и 4 для случая, когда диагональное преобладание не
+		выполняется.
+		- Рекомендуется изменять N от 3 до порядка 500 с шагом порядка 10.
+		- Значения aij матрицы A генерируются случайным образом, но всегда строго в одном и том
+		же диапазоне aij ∈ [m,n], при этом значения m и n рекомендуется выбирать равными
+		порядка 0 и 10 соответственно. Точное значение x предлагается брать вида x=[x1, x2,…,
+		xN]T, где x1=x2=...=xN ≈1, вектор b=[b1, b2,…, bN]T получаем путем перемножения A на x.
+	-->
+
+	<script type="module" src="../build/math/index.js"></script>
+	<script src="https://unpkg.com/function-plot/dist/function-plot.js"></script>
+
+	<style>
+		input {
+			width: 75px;
+		}
+	</style>
+
+	<div id="lab4-input" style="display: flex;flex-direction: column;align-items: baseline;"></div>
+	<div style="display: flex; flex-direction: row;">
+		<div id="lab4-plot"></div>
+		<div id="lab4-plot-2"></div>
+	</div>
+	
+	<script type="module" src="../build/lab4/input.js"></script>
+</body>
+
+</html>
