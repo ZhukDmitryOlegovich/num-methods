@@ -1,4 +1,5 @@
 import functionPlot from 'function-plot';
+import { FunctionPlotOptions } from 'function-plot/dist/types';
 
 import { SquareMatrix, Vector } from '@/math';
 import { fromLength, random } from '@/math/utils';
@@ -41,7 +42,7 @@ import { fromLength, random } from '@/math/utils';
 	const inputFrom = document.createElement('input');
 	inputFrom.type = 'number';
 	inputFrom.placeholder = 'from';
-	inputFrom.valueAsNumber = 0;
+	inputFrom.valueAsNumber = 10;
 	div2.appendChild(inputFrom);
 
 	const inputTo = document.createElement('input');
@@ -83,7 +84,7 @@ import { fromLength, random } from '@/math/utils';
 		let minY = Infinity;
 		let maxY = -Infinity;
 
-		for (let N = from + step; N <= to; N += step) {
+		for (let N = from; N <= to; N += step) {
 			for (let isDiag = 0; isDiag <= 1; isDiag++) {
 				let indData = 0;
 				const mA = new SquareMatrix(
@@ -115,16 +116,20 @@ import { fromLength, random } from '@/math/utils';
 
 		p.innerText = ((Date.now() - startFrom) / 1000).toPrecision(3);
 
-		const fPlot = functionPlot({
-			target: plot,
+		const options: Omit<FunctionPlotOptions, 'target' | 'data'> = {
 			xAxis: {
-				domain: [from + step, to],
+				domain: [from, to],
 			},
 			yAxis: {
 				type: 'log',
 				domain: [minY, maxY],
 			},
 			grid: true,
+		};
+
+		const fPlot = functionPlot({
+			...options,
+			target: plot,
 			data: datas[0].map((points) => ({
 				fnType: 'points',
 				graphType: 'polyline',
@@ -133,15 +138,8 @@ import { fromLength, random } from '@/math/utils';
 		});
 
 		const fPlot2 = functionPlot({
+			...options,
 			target: plot2,
-			xAxis: {
-				domain: [from + step, to],
-			},
-			yAxis: {
-				type: 'log',
-				domain: [minY, maxY],
-			},
-			grid: true,
 			data: datas[1].map((points) => ({
 				fnType: 'points',
 				graphType: 'polyline',
