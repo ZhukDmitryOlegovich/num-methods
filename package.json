@@ -27,6 +27,7 @@
 	},
 	"dependencies": {
 		"function-plot": "^1.22.9-0",
-		"mathjs": "^11.1.0"
+		"mathjs": "^11.1.0",
+		"vis-graph3d": "^5.5.2"
 	}
 }

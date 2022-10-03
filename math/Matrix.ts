@@ -77,4 +77,18 @@ export class Matrix<A extends number, B extends number> {
 	mulN(other: number): Matrix<A, B> {
 		return new Matrix<A, B>(map(this.matrix, (a) => map(a, (x) => x * other)));
 	}
+
+	normaMax(): number {
+		let max = -Infinity;
+
+		for (let i = 0; i < this.countRows(); i++) {
+			let sum = 0;
+			for (let j = 0; j < this.countColons(); j++) {
+				sum += Math.abs(this.matrix[j][i]);
+			}
+			max = Math.max(max, sum);
+		}
+
+		return max;
+	}
 }

@@ -80,4 +80,61 @@ export class SquareMatrix<A extends number> extends Matrix<A, A> {
 
 		return x;
 	}
+
+	// http://mathhelpplanet.com/static.php?p=javascript-operatsii-nad-matritsami
+	// Определитель матрицы
+	determinant() {
+		const N = this.countColons();
+		const B = this.clone();
+		let denom = 1;
+		let exchanges = 0;
+		for (let i = 0; i < N - 1; ++i) {
+			let maxN = i;
+			let maxValue = Math.abs(B.matrix[i][i]);
+			for (let j = i + 1; j < N; ++j) {
+				const value = Math.abs(B.matrix[j][i]);
+				if (value > maxValue) { maxN = j; maxValue = value; }
+			}
+			if (maxN > i) {
+				const temp = B.matrix[i];
+				B.matrix[i] = B.matrix[maxN];
+				B.matrix[maxN] = temp;
+				++exchanges;
+			} else if (maxValue === 0) return maxValue;
+
+			const value1 = B.matrix[i][i];
+			for (let j = i + 1; j < N; ++j) {
+				const value2 = B.matrix[j][i];
+				B.matrix[j][i] = 0;
+				for (let k = i + 1; k < N; ++k) {
+					B.matrix[j][k] = (B.matrix[j][k] * value1 - B.matrix[i][k] * value2) / denom;
+				}
+			}
+			denom = value1;
+		}
+		return (exchanges % 2 === 0 ? 1 : -1) * B.matrix[N - 1][N - 1];
+	}
+
+	// Союзная матрица
+	adjugate() {
+		const N = this.countColons();
+		return new SquareMatrix(fromLength(N, (i) => fromLength(N, (j) => {
+			const B = new SquareMatrix(fromLength(N - 1, () => fromLength(N - 1, () => 0)));
+			for (let m = 0; m < j; m++) {
+				for (let n = 0; n < i; n++) B.matrix[m][n] = this.matrix[m][n];
+				for (let n = i + 1; n < N; n++) B.matrix[m][n - 1] = this.matrix[m][n];
+			}
+			for (let m = j + 1; m < N; m++) {
+				for (let n = 0; n < i; n++) B.matrix[m - 1][n] = this.matrix[m][n];
+				for (let n = i + 1; n < N; n++) B.matrix[m - 1][n - 1] = this.matrix[m][n];
+			}
+			const sign = (i + j) % 2 === 0 ? 1 : -1;
+			return sign * B.determinant(); // Функцию Determinant см. выше;
+		})));
+	}
+
+	// Обратная матрица
+	inverse() {
+		return this.adjugate().mulN(1 / this.determinant());
+	}
 }
