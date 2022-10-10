@@ -81,6 +81,37 @@ export class SquareMatrix<A extends number> extends Matrix<A, A> {
 		return x;
 	}
 
+	jakobi(
+		other: Vector<A>,
+		option: { z?: boolean; eps?: number; maxCount?: number; },
+	) {
+		const N = this.countColons();
+		const { z, eps = 0, maxCount = Infinity } = option;
+
+		const x = new Vector(fromLength(N, () => 0));
+		let xBefore = x;
+		let count = 0;
+
+		do {
+			xBefore = Vector.fromMatrix(x.clone());
+			const xNext = z ? x : xBefore;
+			for (let i = 0; i < N; i++) {
+				x.matrix[0][i] = other.matrix[0][i]
+					- fromLength(
+						N,
+						(j) => (j === i ? 0 : this.matrix[j][i] * xNext.matrix[0][j]),
+					)
+						.reduce((a, b) => a + b, 0);
+			}
+			count++;
+		} while (
+			count < maxCount
+			&& eps < Math.abs(Vector.fromMatrix(xBefore.add(x.mulN(-1))).norma())
+		);
+
+		return { count, result: x };
+	}
+
 	// http://mathhelpplanet.com/static.php?p=javascript-operatsii-nad-matritsami
 	// Определитель матрицы
 	determinant() {
