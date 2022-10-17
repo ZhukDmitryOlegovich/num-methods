@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Лаб №6 | Жук. Численные методы</title>
+	<link rel="shortcut icon" href="../static/favicon.png">
+	<link rel="stylesheet" href="../static/reset.css">
+	<link rel="stylesheet" href="../static/main.css">
+</head>
+
+<body>
+	<div style="display: flex; align-items: center; gap: 4px;">
+		<a href="https://github.com/ZhukDmitryOlegovich/num-methods/tree/main/lab6">Ссылка на исходники</a>
+		<script>document.body.style.zoom = 1.7</script>
+		<button onclick="document.body.style.zoom -= -0.1">zoom +</button>
+		<button onclick="document.body.style.zoom -= 0.1">zoom -</button>
+		<div style="flex-grow: 1;"></div>
+		<button onclick="location.href='../lab1'">lab 1</button>
+		<button onclick="location.href='../lab2-3'">lab 2-3</button>
+		<button onclick="location.href='../lab4'">lab 4</button>
+		<button onclick="location.href='../lab5'">lab 5</button>
+		<button onclick="location.href='../lab6'">lab 6</button>
+	</div>
+	<h2>Лабораторные работы №7<br>«Сравнение скорости сходимости метода Якоби и Зейделя»</h2>
+
+	<script type="module" src="../build/math/index.js"></script>
+
+	<script src="https://unpkg.com/function-plot/dist/function-plot.js"></script>
+
+	<div id="lab7-input" style="display: flex;flex-direction: column;align-items: baseline;"></div>
+	<div id="lab7-plot"></div>
+	<script type="module" src="../build/lab7/input.js"></script>
+
+</body>
+
+</html>

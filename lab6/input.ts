@@ -106,13 +106,16 @@ import { fromLength } from '@/math/utils';
 
 		[
 			'<b>Якоби</b>',
-			a.jakobi(b, { z: false, eps: 1e-5, maxCount: 1e5 }),
+			a.jakobi(b, { z: false, eps: 1e-5, maxCount: 1e4 }),
 			'<b>Зейдель</b>',
-			a.jakobi(b, { z: true, eps: 1e-5, maxCount: 1e5 }),
+			a.jakobi(b, { z: true, eps: 1e-5, maxCount: 1e4 }),
+			'<b>Гаус</b>',
+			a.eliminationGaussian(b),
 		].forEach((value) => {
 			if (typeof value === 'string') {
 				p.innerHTML += value;
 			} else {
+				console.log(value);
 				p.innerHTML += JSON.stringify(value);
 			}
 			p.innerHTML += '<br>';

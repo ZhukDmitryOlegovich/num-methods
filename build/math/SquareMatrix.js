@@ -70,9 +70,9 @@ export class SquareMatrix extends Matrix {
             xBefore = Vector.fromMatrix(x.clone());
             const xNext = z ? x : xBefore;
             for (let i = 0; i < N; i++) {
-                x.matrix[0][i] = other.matrix[0][i]
-                    - fromLength(N, (j) => (j === i ? 0 : this.matrix[j][i] * xNext.matrix[0][j]))
-                        .reduce((a, b) => a + b, 0);
+                const sum = fromLength(N, (j) => (j === i ? 0 : this.matrix[j][i] * xNext.matrix[0][j]))
+                    .reduce((a, b) => a + b, 0);
+                x.matrix[0][i] = (other.matrix[0][i] - sum) / this.matrix[i][i];
             }
             count++;
         } while (count < maxCount
