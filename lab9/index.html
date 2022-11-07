@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset="utf-8" />
-	<title>Лаб №5 | Жук. Численные методы</title>
+	<title>Лаб №9 | Жук. Численные методы</title>
 	<link rel="shortcut icon" href="../static/favicon.png">
 	<link rel="stylesheet" href="../static/reset.css">
 	<link rel="stylesheet" href="../static/main.css">
@@ -11,8 +11,8 @@
 
 <body>
 	<div style="display: flex; align-items: center; gap: 4px;">
-		<a href="https://github.com/ZhukDmitryOlegovich/num-methods/tree/main/lab5">Ссылка на исходники</a>
-		<script>document.body.style.zoom = 1.0</script>
+		<a href="https://github.com/ZhukDmitryOlegovich/num-methods/tree/main/lab9">Ссылка на исходники</a>
+		<script>document.body.style.zoom = 1.5</script>
 		<button onclick="document.body.style.zoom -= -0.1">zoom +</button>
 		<button onclick="document.body.style.zoom -= 0.1">zoom -</button>
 		<div style="flex-grow: 1;"></div>
@@ -24,29 +24,19 @@
 		<button onclick="location.href='../lab7'">lab 7</button>
 		<button onclick="location.href='../lab9'">lab 9</button>
 	</div>
-	<h2>Лабораторные работы №5
-		<br>«Вычисления числа обусловленности матрицы»</h2>
+	<h2>Лабораторные работы №9<br>«Изучение скорости сходимости однопараметрического метода»</h2>
 
 	<script type="module" src="../build/math/index.js"></script>
+
 	<script src="https://unpkg.com/function-plot/dist/function-plot.js"></script>
-	<script type="text/javascript" src="https://unpkg.com/vis-graph3d@latest/dist/vis-graph3d.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.1.0/math.min.js"
+		integrity="sha512-xOu54cGoQRU4PxCzB268p5N3MPvH4EHtoQjdw7y0qlkKyMvS5D9IsYFPP0NDtrky7SqBntN8cPtl0kx+UKrBgg=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-	<style>
-		input {
-			width: 75px;
-		}
-	</style>
+	<div id="lab9-input" style="display: flex;flex-direction: column;align-items: baseline;"></div>
+	<div id="lab9-plot"></div>
+	<script type="module" src="../build/lab9/input.js"></script>
 
-	<div class="table">
-		<div>
-			<div id="lab5-1-input"></div>
-			<div id="lab5-1-output"></div>
-			<div id="lab5-1-output-2"></div>
-			<div id="lab5-1-output-3"></div>
-		</div>
-	</div>
-	
-	<script type="module" src="../build/lab5/input.js"></script>
 </body>
 
 </html>

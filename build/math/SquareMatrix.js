@@ -141,4 +141,23 @@ export class SquareMatrix extends Matrix {
     inverse() {
         return this.adjugate().mulN(1 / this.determinant());
     }
+    singleParameterMethod(other, option) {
+        const { t, eps = 0, maxCount = Infinity } = option;
+        const N = this.countColons();
+        const E = new SquareMatrix(fromLength(N, (i) => fromLength(N, (j) => +(i === j))));
+        const a = this;
+        const f = other;
+        let x = new Vector(fromLength(N, () => 0));
+        let xBefore = x;
+        let count = 0;
+        do {
+            xBefore = x;
+            const P = E.add(a.mulN(-t));
+            const g = f.mulN(t);
+            x = Vector.fromMatrix(P.mul(x).add(g));
+            count++;
+        } while (count < maxCount
+            && eps < Math.abs(Vector.fromMatrix(xBefore.add(x.mulN(-1))).norma()));
+        return { count, result: x };
+    }
 }
