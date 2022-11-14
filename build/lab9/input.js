@@ -80,7 +80,7 @@ import { fromLength } from '../math/utils.js';
         const count = 20;
         for (let i = 1; i < count; i++) {
             const t = (2 / maxL) * (i / count);
-            const res = a.singleParameterMethod(b, { t, maxCount, eps: 1e-5 });
+            const res = a.singleParameterMethod(b, { t, maxCount, eps: 1e-10 });
             data.push([t, res.count]);
         }
         console.log({

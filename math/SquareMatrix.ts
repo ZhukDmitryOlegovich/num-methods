@@ -196,4 +196,27 @@ export class SquareMatrix<A extends number> extends Matrix<A, A> {
 
 		return { count, result: x };
 	}
+
+	decomposeLU() {
+		const N = this.countColons();
+		const L = new SquareMatrix(fromLength(N, (i) => fromLength(N, (j) => +(i === j))));
+		const U = new SquareMatrix(fromLength(N, () => fromLength(N, () => 0)));
+
+		for (let i = 0; i < N; i++) {
+			for (let j = 0; j < N; j++) {
+				if (i <= j) {
+					U.matrix[j][i] = this.matrix[j][i]
+						- fromLength(i, (k) => L.matrix[k][i] * U.matrix[j][k])
+							.reduce((a, b) => a + b, 0);
+				} else {
+					L.matrix[j][i] = this.matrix[j][i]
+						- fromLength(i, (k) => L.matrix[k][i] * U.matrix[j][k])
+							.reduce((a, b) => a + b, 0);
+					L.matrix[j][i] /= U.matrix[j][j];
+				}
+			}
+		}
+
+		return { L, U };
+	}
 }
