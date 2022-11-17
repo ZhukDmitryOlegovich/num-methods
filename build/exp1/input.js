@@ -48,6 +48,8 @@
                 x: xi * sinTheta,
                 y: xi * cosTheta,
                 z: eta,
+                xi,
+                theta,
             });
             const xiD = 2 * xi
                 - 2 * xi * (xi + eta)
@@ -88,7 +90,15 @@
             yMax: 1,
             zMin: 0,
             zMax: 1,
-            tooltip: true,
+            tooltip: ({ data: { 
+            // eslint-disable-next-line no-shadow
+            x, y, z, xi, theta, }, }) => `<table>
+<tr><th>ξ sin θ</th><th>${x}</th></tr>
+<tr><td>ξ cos θ</td><td>${y}</td></tr>
+<tr><td>η</td><td>${z}</td></tr>
+<tr><td>ξ</td><td>${xi}</td></tr>
+<tr><td>θ</td><td>${theta}</td></tr>
+</table>`,
             yCenter: '40%',
             axisFontSize: 40,
         };
