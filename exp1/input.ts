@@ -30,6 +30,10 @@ declare let vis: any;
 	addInput('c2', -6);
 	addInput('k', 1);
 
+	const checkbox = document.createElement('input');
+	checkbox.type = 'checkbox';
+	input1.appendChild(checkbox);
+
 	const button1 = document.createElement('button');
 	button1.innerText = 'Сгенерить';
 	input1.appendChild(button1);
@@ -107,9 +111,15 @@ declare let vis: any;
 
 			tooltip: true,
 			yCenter: '40%',
+			axisFontSize: 40,
 		};
 
 		const graph3d = new vis.Graph3d(output2, data, options2);
+
+		checkbox.checked = graph3d.showPerspective;
+		checkbox.onchange = () => {
+			graph3d.setOptions({ showPerspective: checkbox.checked });
+		};
 
 		// graph3d.on('cameraPositionChange', (event: any) => {
 		// 	console.log(`${'The camera position changed to:\n'
