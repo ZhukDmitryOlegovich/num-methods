@@ -11,7 +11,7 @@
 
 <body>
 	<div style="display: flex; align-items: center; gap: 4px;">
-		<a href="https://github.com/ZhukDmitryOlegovich/num-methods/blob/main/exp1/analiz-bifurkatsiy-v-dvuhmodovoy-approksimatsii-sistemy-kuramoto-tsuzuki.pdf">Ссылка на исходники</a>
+		<a href="https://github.com/ZhukDmitryOlegovich/num-methods/tree/main/exp1">Ссылка на исходники</a>
 		<script>document.body.style.zoom = 1.0</script>
 		<button onclick="document.body.style.zoom -= -0.1">zoom +</button>
 		<button onclick="document.body.style.zoom -= 0.1">zoom -</button>
@@ -25,20 +25,14 @@
 	<script type="text/javascript" src="https://unpkg.com/vis-graph3d@latest/dist/vis-graph3d.min.js"></script>
 
 	<style>
-		body {
-			margin-bottom: 0;
-		}
 		input[type="number"] {
 			width: 75px;
 		}
 	</style>
 
-	<div class="table">
-		<div>
-			<div id="exp1-1-input"></div>
-			<div id="exp1-1-output"></div>
-			<div id="exp1-1-output-2"></div>
-		</div>
+	<div class="table flex-fill">
+		<div id="inputWrapper" style="border: 1px solid; width: 20%;"></div>
+		<div id="outputWrapper" class="flex-fill"></div>
 	</div>
 	
 	<script type="module" src="../build/exp1/input.js"></script>

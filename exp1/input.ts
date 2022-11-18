@@ -1,58 +1,89 @@
 declare let vis: any;
 
-(() => {
-	const input1 = document.getElementById('exp1-1-input');
-	const output2 = document.getElementById('exp1-1-output-2');
+/* eslint-disable no-unused-vars, no-shadow */
+enum NameInput {
+	count = 'count',
+	delta = 'delta',
+	xi = 'xi',
+	eta = 'eta',
+	thetaMul = 'thetaMul',
+	c1 = 'c1',
+	c2 = 'c2',
+	k = 'k',
+}
+/* eslint-enable no-unused-vars, no-shadow */
 
-	if (!input1) {
+(() => {
+	const inputWrapper = document.getElementById('inputWrapper');
+	const outputWrapper = document.getElementById('outputWrapper');
+
+	if (!inputWrapper || !outputWrapper) {
 		return;
 	}
 
 	const allInput: Record<string, HTMLInputElement> = {};
 
-	const addInput = (name: string, value: number) => {
+	const desk: Record<NameInput, string> = {
+		[NameInput.count]: 'Кол-во точек на графике',
+		[NameInput.delta]: 'Шаг графика',
+		[NameInput.xi]: 'Коэффициент ξ',
+		[NameInput.eta]: 'Коэффициент η',
+		[NameInput.thetaMul]: 'Коэффициент θ / π',
+		[NameInput.c1]: 'Коэффициент c<sub>1</sub>',
+		[NameInput.c2]: 'Коэффициент c<sub>2</sub>',
+		[NameInput.k]: 'Коэффициент k',
+	};
+
+	const addInput = (name: NameInput, value: number) => {
+		const span = document.createElement('span');
+		span.innerHTML = desk[name] || name;
+		inputWrapper.appendChild(span);
 		const inputA = document.createElement('input');
 		inputA.type = 'number';
 		inputA.placeholder = name;
 		inputA.valueAsNumber = value;
-		input1.appendChild(inputA);
+		inputWrapper.appendChild(inputA);
 		allInput[name] = inputA;
 	};
 
-	const getInput = (name: string) => allInput[name].valueAsNumber;
+	const getInput = (name: NameInput) => allInput[name].valueAsNumber;
 
-	addInput('count', 1000);
-	addInput('delta', 0.1);
-	addInput('xi', 0.5);
-	addInput('eta', 0.5);
-	addInput('thetaMul', 1);
-	addInput('c1', 7);
-	addInput('c2', -6);
-	addInput('k', 1);
+	addInput(NameInput.count, 1000);
+	addInput(NameInput.delta, 0.1);
+	addInput(NameInput.xi, 0.5);
+	addInput(NameInput.eta, 0.5);
+	addInput(NameInput.thetaMul, 1);
+	addInput(NameInput.c1, 7);
+	addInput(NameInput.c2, -6);
+	addInput(NameInput.k, 1);
+
+	const span = document.createElement('span');
+	span.innerHTML = 'Использовать перспективу';
+	inputWrapper.appendChild(span);
 
 	const checkbox = document.createElement('input');
 	checkbox.type = 'checkbox';
-	input1.appendChild(checkbox);
+	inputWrapper.appendChild(checkbox);
 
 	const button1 = document.createElement('button');
 	button1.innerText = 'Сгенерить';
-	input1.appendChild(button1);
+	inputWrapper.appendChild(button1);
 
 	// const p = document.createElement('p');
 	// output1.appendChild(p);
 
-	button1.onclick = () => {
+	const calcDataSet = () => {
 		const data = new vis.DataSet();
-		const count = getInput('count');
-		const delta = getInput('delta');
+		const count = getInput(NameInput.count);
+		const delta = getInput(NameInput.delta);
 
-		const c1 = getInput('c1');
-		const c2 = getInput('c2');
-		const k = getInput('k');
+		const c1 = getInput(NameInput.c1);
+		const c2 = getInput(NameInput.c2);
+		const k = getInput(NameInput.k);
 
-		let xi = getInput('xi');
-		let eta = getInput('eta');
-		let theta = getInput('thetaMul') * Math.PI;
+		let xi = getInput(NameInput.xi);
+		let eta = getInput(NameInput.eta);
+		let theta = getInput(NameInput.thetaMul) * Math.PI;
 
 		for (let index = 1; index < count; index++) {
 			const cosTheta = Math.cos(theta);
@@ -85,9 +116,14 @@ declare let vis: any;
 			theta += thetaD / length * delta;
 		}
 
+		return data;
+	};
+
+	const createGraph3d = (data: any) => {
 		const options2 = {
 			width: '100%',
-			height: 'calc(100vh - 90px)',
+			// костыль, чтобы не привышать размер
+			height: 'calc(100% - 3px)',
 			style: 'line',
 			showPerspective: true,
 			showGrid: true,
@@ -97,7 +133,7 @@ declare let vis: any;
 			cameraPosition: {
 				horizontal: 0.7,
 				vertical: 0.4,
-				distance: 3.1,
+				distance: 4.5,
 			},
 
 			xLabel: 'ξ sin θ',
@@ -124,28 +160,38 @@ declare let vis: any;
 <tr><td>θ</td><td>${theta}</td></tr>
 </table>`,
 			yCenter: '40%',
-			axisFontSize: 40,
+			axisFontSize: 80,
 		};
 
-		const graph3d = new vis.Graph3d(output2, data, options2);
+		return new vis.Graph3d(outputWrapper, data, options2);
+	};
 
+	const didUpdate = (graph3d: any) => {
 		checkbox.checked = graph3d.showPerspective;
-		checkbox.onchange = () => {
-			graph3d.setOptions({ showPerspective: checkbox.checked });
-		};
+	};
 
-		// graph3d.on('cameraPositionChange', (event: any) => {
-		// 	console.log(`${'The camera position changed to:\n'
-		// 	+ 'Horizontal: '}${event.horizontal}\n`
-		// 	+ `Vertical: ${event.vertical}\n`
-		// 	+ `Distance: ${event.distance}`);
-		// });
+	const graph3d = createGraph3d(calcDataSet());
+	didUpdate(graph3d);
 
-		console.log([
-			graph3d,
-		]);
+	// graph3d.on('cameraPositionChange', (event: any) => {
+	// 	console.log(`${'The camera position changed to:\n'
+	// 	+ 'Horizontal: '}${event.horizontal}\n`
+	// 	+ `Vertical: ${event.vertical}\n`
+	// 	+ `Distance: ${event.distance}`);
+	// });
 
-		// @ts-ignore
-		window.graph3d = graph3d;
+	// @ts-ignore
+	// window.graph3d = graph3d;
+
+	const updateData = () => {
+		graph3d.setData(calcDataSet());
+		didUpdate(graph3d);
+	};
+
+	button1.onclick = updateData;
+
+	Object.values(allInput).forEach((input) => input.addEventListener('change', updateData));
+	checkbox.onchange = () => {
+		graph3d.setOptions({ showPerspective: checkbox.checked });
 	};
 })();
