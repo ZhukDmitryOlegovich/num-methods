@@ -182,7 +182,7 @@ function calcDataSet(r: R) {
 
 	r.addInput(NameInput.count, { value: 1000 }).addEventListener('change', updateData);
 	r.addInput(NameInput.delta, { value: 0.02 }).addEventListener('change', updateData);
-	r.addInput(NameInput.norma, { type: 'checkbox', value: true }).addEventListener('change', updateNorma);
+	r.addInput(NameInput.norma, { type: 'checkbox', value: false }).addEventListener('change', updateNorma);
 	r.addInput(NameInput.kNorma, { value: 0.12 }).addEventListener('change', updateData);
 	r.addInput(NameInput.showPerspective, { type: 'checkbox' }).addEventListener('change', updatePerspective);
 	inputWrapper.appendChild(document.createElement('hr'));
@@ -196,6 +196,7 @@ function calcDataSet(r: R) {
 
 	const graph3d = createGraph3d(calcDataSet(r), outputWrapper);
 	r.setValueAsBoolean(NameInput.showPerspective, graph3d.showPerspective);
+	r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
 
 	function updateData() {
 		graph3d.setData(calcDataSet(r));
