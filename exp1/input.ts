@@ -18,7 +18,7 @@ enum NameInput {
 
 const desk: Record<NameInput, string> = {
 	[NameInput.count]: 'Кол-во точек на графике',
-	[NameInput.delta]: 'Шаг графика',
+	[NameInput.delta]: 'Шаг градиента',
 	[NameInput.xi]: 'Коэффициент ξ',
 	[NameInput.eta]: 'Коэффициент η',
 	[NameInput.thetaMul]: 'Коэффициент θ / π',
