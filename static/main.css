@@ -20,6 +20,12 @@ sub {
     font-size: smaller;
 }
 
+hr {
+	width: calc(100% - 30px);
+	min-width: 1px;
+	max-width: 90%;
+}
+
 .flex-fill {
 	display: flex;
     flex-grow: 1;

@@ -36,7 +36,9 @@
         "no-param-reassign": "off",
         "no-restricted-syntax": "off",
         "max-classes-per-file": "off",
-        "no-use-before-define": "warn",
+        "no-use-before-define": ["error", {
+            "functions": false
+        }],
         "max-len": [
             "error",
             {
