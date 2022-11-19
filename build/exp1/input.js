@@ -17,7 +17,7 @@ var NameInput;
 /* eslint-enable no-unused-vars, no-shadow */
 const desk = {
     [NameInput.count]: 'Кол-во точек на графике',
-    [NameInput.delta]: 'Шаг графика',
+    [NameInput.delta]: 'Шаг градиента',
     [NameInput.xi]: 'Коэффициент ξ',
     [NameInput.eta]: 'Коэффициент η',
     [NameInput.thetaMul]: 'Коэффициент θ / π',
