@@ -1,4 +1,4 @@
-"use strict";
+import { addInput2D } from './input2d.js';
 /* eslint-disable no-unused-vars, no-shadow */
 var NameInput;
 (function (NameInput) {
@@ -13,21 +13,9 @@ var NameInput;
     NameInput["showPerspective"] = "showPerspective";
     NameInput["norma"] = "norma";
     NameInput["kNorma"] = "kNorma";
+    NameInput["start"] = "start";
 })(NameInput || (NameInput = {}));
 /* eslint-enable no-unused-vars, no-shadow */
-const desk = {
-    [NameInput.count]: 'Кол-во точек на графике',
-    [NameInput.delta]: 'Шаг градиента',
-    [NameInput.xi]: 'Коэффициент ξ',
-    [NameInput.eta]: 'Коэффициент η',
-    [NameInput.thetaMul]: 'Коэффициент θ / π',
-    [NameInput.c1]: 'Коэффициент c<sub>1</sub>',
-    [NameInput.c2]: 'Коэффициент c<sub>2</sub>',
-    [NameInput.k]: 'Коэффициент k',
-    [NameInput.showPerspective]: 'Использовать перспективу',
-    [NameInput.norma]: 'Нормализовывать градиент',
-    [NameInput.kNorma]: 'Коэффициент нормализации',
-};
 function createGraph3d(data, el) {
     const options2 = {
         width: '100%',
@@ -67,16 +55,19 @@ function createGraph3d(data, el) {
     };
     return new vis.Graph3d(el, data, options2);
 }
+const replaceNaN = (value, def) => (Number.isNaN(value) ? def : value);
 function createR(el) {
     const allInput = {};
     return {
+        addHr: () => el.appendChild(document.createElement('hr')),
         addInput: (name, options) => {
             const span = document.createElement('span');
-            span.innerHTML = desk[name] || name;
+            span.innerHTML = options?.placeholder || name;
             el.appendChild(span);
             const input = document.createElement('input');
             input.type = options?.type || 'number';
             const value = options?.value;
+            input.placeholder = `${value}`;
             switch (typeof value) {
                 case 'number':
                     input.valueAsNumber = value;
@@ -94,14 +85,21 @@ function createR(el) {
             return input;
         },
         getInput: (name) => allInput[name],
-        getValueAsNumber: (name) => allInput[name].valueAsNumber,
+        getValueAsNumber: (name) => replaceNaN(allInput[name].valueAsNumber, +allInput[name].placeholder),
         getValueAsBoolean: (name) => allInput[name].checked,
         setValueAsBoolean: (name, value) => { allInput[name].checked = value; },
+        setValueAsString: (name, value) => {
+            if (allInput[name].value === value)
+                return false;
+            allInput[name].value = value;
+            return true;
+        },
     };
 }
 function calcDataSet(r) {
     const data = new vis.DataSet();
     const count = r.getValueAsNumber(NameInput.count);
+    const start = r.getValueAsNumber(NameInput.start);
     const delta = r.getValueAsNumber(NameInput.delta);
     const c1 = r.getValueAsNumber(NameInput.c1);
     const c2 = r.getValueAsNumber(NameInput.c2);
@@ -111,16 +109,18 @@ function calcDataSet(r) {
     let xi = r.getValueAsNumber(NameInput.xi);
     let eta = r.getValueAsNumber(NameInput.eta);
     let theta = r.getValueAsNumber(NameInput.thetaMul) * Math.PI;
-    for (let index = 1; index < count; index++) {
+    for (let index = 0; index < count + start; index++) {
         const cosTheta = Math.cos(theta);
         const sinTheta = Math.sin(theta);
-        data.add({
-            x: xi * sinTheta,
-            y: xi * cosTheta,
-            z: eta,
-            xi,
-            theta,
-        });
+        if (index >= start) {
+            data.add({
+                x: xi * sinTheta,
+                y: xi * cosTheta,
+                z: eta,
+                xi,
+                theta,
+            });
+        }
         const xiD = 2 * xi
             - 2 * xi * (xi + eta)
             - xi * eta * (cosTheta + c2 * sinTheta);
@@ -146,19 +146,44 @@ function calcDataSet(r) {
         return;
     }
     const r = createR(inputWrapper);
-    r.addInput(NameInput.count, { value: 1000 }).addEventListener('change', updateData);
-    r.addInput(NameInput.delta, { value: 0.02 }).addEventListener('change', updateData);
-    r.addInput(NameInput.norma, { type: 'checkbox', value: false }).addEventListener('change', updateNorma);
-    r.addInput(NameInput.kNorma, { value: 0.12 }).addEventListener('change', updateData);
-    r.addInput(NameInput.showPerspective, { type: 'checkbox' }).addEventListener('change', updatePerspective);
-    inputWrapper.appendChild(document.createElement('hr'));
-    r.addInput(NameInput.c1, { value: 7 }).addEventListener('change', updateData);
-    r.addInput(NameInput.c2, { value: -6 }).addEventListener('change', updateData);
-    r.addInput(NameInput.k, { value: 1 }).addEventListener('change', updateData);
-    inputWrapper.appendChild(document.createElement('hr'));
-    r.addInput(NameInput.xi, { value: 0.5 }).addEventListener('change', updateData);
-    r.addInput(NameInput.eta, { value: 0.5 }).addEventListener('change', updateData);
-    r.addInput(NameInput.thetaMul, { value: 1 }).addEventListener('change', updateData);
+    r.addInput(NameInput.count, { value: 1000, placeholder: 'Кол-во точек на графике' }).addEventListener('change', updateData);
+    r.addInput(NameInput.start, { value: 500, placeholder: 'Начать с точки с индексом' }).addEventListener('change', updateData);
+    r.addInput(NameInput.delta, { value: 0.02, placeholder: 'Шаг градиента' }).addEventListener('change', updateData);
+    r.addInput(NameInput.norma, { type: 'checkbox', value: false, placeholder: 'Нормализовывать градиент' }).addEventListener('change', updateNorma);
+    r.addInput(NameInput.kNorma, { value: 0.12, placeholder: 'Коэффициент нормализации' }).addEventListener('change', updateData);
+    r.addInput(NameInput.showPerspective, { type: 'checkbox', placeholder: 'Использовать перспективу' }).addEventListener('change', updatePerspective);
+    r.addHr();
+    r.addInput(NameInput.c1, { value: 7, placeholder: 'Коэффициент c<sub>1</sub>' }).addEventListener('change', updateData);
+    r.addInput(NameInput.c2, { value: -6, placeholder: 'Коэффициент c<sub>2</sub>' }).addEventListener('change', updateData);
+    r.addInput(NameInput.k, { value: 1, placeholder: 'Коэффициент k' }).addEventListener('change', updateData);
+    r.addHr();
+    r.addInput(NameInput.xi, { value: 0.5, placeholder: 'Коэффициент ξ' }).addEventListener('change', updateData);
+    r.addInput(NameInput.eta, { value: 0.5, placeholder: 'Коэффициент η' }).addEventListener('change', updateData);
+    r.addInput(NameInput.thetaMul, { value: 1, placeholder: 'Коэффициент θ / π' }).addEventListener('change', updateData);
+    r.addHr();
+    const main = document.createElement('div');
+    main.style.border = '1px solid black';
+    main.style.width = '200px';
+    main.style.height = '200px';
+    const cursor = document.createElement('div');
+    cursor.style.backgroundColor = 'white';
+    cursor.style.width = '10px';
+    cursor.style.height = '10px';
+    cursor.style.borderRadius = '5px';
+    main.style.borderRadius = '5px';
+    cursor.style.border = '1px solid black';
+    main.appendChild(cursor);
+    addInput2D(cursor, main, (x, y) => {
+        x = 20 * x - 10;
+        y = 20 * y - 10;
+        let needUpdate = false;
+        needUpdate = r.setValueAsString(NameInput.c1, x.toFixed(2)) || needUpdate;
+        needUpdate = r.setValueAsString(NameInput.c2, y.toFixed(2)) || needUpdate;
+        if (needUpdate) {
+            updateData();
+        }
+    });
+    inputWrapper.appendChild(main);
     const graph3d = createGraph3d(calcDataSet(r), outputWrapper);
     r.setValueAsBoolean(NameInput.showPerspective, graph3d.showPerspective);
     r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
@@ -185,5 +210,5 @@ function calcDataSet(r) {
     // 	+ `Distance: ${event.distance}`);
     // });
     // @ts-ignore
-    // window.graph3d = graph3d;
+    window.graph3d = graph3d;
 })();

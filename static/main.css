@@ -26,6 +26,10 @@ hr {
 	max-width: 90%;
 }
 
+.off-user-select * {
+	user-select: none;
+}
+
 .flex-fill {
 	display: flex;
     flex-grow: 1;
