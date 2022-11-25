@@ -1,23 +1,4 @@
-import bigData from './data';
-
 declare let vis: any;
-
-/* eslint-disable no-unused-vars, no-shadow */
-enum NameInput {
-	count = 'count',
-	delta = 'delta',
-	xi = 'xi',
-	eta = 'eta',
-	thetaMul = 'thetaMul',
-	c1 = 'c1',
-	c2 = 'c2',
-	k = 'k',
-	showPerspective = 'showPerspective',
-	norma = 'norma',
-	kNorma = 'kNorma',
-	start = 'start',
-}
-/* eslint-enable no-unused-vars, no-shadow */
 
 function createGraph3d(data: any, el: HTMLElement) {
 	const options2 = {
@@ -35,24 +16,16 @@ function createGraph3d(data: any, el: HTMLElement) {
 			vertical: 0.4,
 			distance: 4.5,
 		},
-		yCenter: '40%',
+		yCenter: '50%',
 		axisFontSize: 80,
 	};
 
 	return new vis.Graph3d(el, data, options2);
 }
 
-function calcDataSet(k: number, fromX: number) {
-	const data = new vis.DataSet();
-	bigData.forEach(([x, y, z], i) => {
-		if ((k === 1 || ((x * 100) % k === 0 && (y * 100) % k === 0)) && x >= fromX) {
-			data.add({
-				x, y, z, style: z,
-			});
-		}
-	});
-	return data;
-}
+const parseHash = () => window.location.hash.slice(1).split('#').map((e) => e.split(':'))
+	// eslint-disable-next-line no-return-assign, no-sequences
+	.reduce<Record<string, string>>((accum, [key, value]) => (accum[key] = value, accum), {});
 
 (() => {
 	const outputWrapper = document.getElementById('outputWrapper');
@@ -62,19 +35,33 @@ function calcDataSet(k: number, fromX: number) {
 	}
 
 	const data = new vis.DataSet();
-	data.add({x: 0, y: 0, z: 0});
-	data.add({x: 1, y: 1, z: 1});
+	data.add({ x: 0, y: 0, z: 0 });
+	data.add({ x: 1, y: 1, z: 1 });
 
 	const graph3d = createGraph3d(data, outputWrapper);
 
 	const calc = () => {
 		// eslint-disable-next-line no-restricted-globals
-		const [k = 1, fromX = 0.1, pr] = window.location.hash.slice(1).split(':').map((e) => (!e || isNaN(+e) ? undefined : +e));
+		const {
+			k = '1', fromX = '-Infinity', pr, filename = '/neural2-3/data.json', yCenter = graph3d.yCenter,
+		} = parseHash();
 
 		console.log({ k, fromX, pr });
 
-		graph3d.setData(calcDataSet(k, fromX));
-		graph3d.setOptions({ showPerspective: !!pr });
+		const data = new vis.DataSet();
+		import(filename, { assert: { type: "json" } }).then(({default: bigData}) => {
+			console.log(bigData);
+			(bigData as number[][]).forEach(([x, y, z], i) => {
+				if ((+k === 1 || ((x * 100) % +k === 0 && (y * 100) % +k === 0)) && x >= +fromX) {
+					data.add({
+						x, y, z, style: z,
+					});
+				}
+			});
+
+			graph3d.setData(data);
+			graph3d.setOptions({ showPerspective: !!+pr, yCenter });
+		});
 	};
 
 	window.addEventListener('hashchange', calc);

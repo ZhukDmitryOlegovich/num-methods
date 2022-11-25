@@ -1,21 +1,4 @@
-import bigData from './data.js';
-/* eslint-disable no-unused-vars, no-shadow */
-var NameInput;
-(function (NameInput) {
-    NameInput["count"] = "count";
-    NameInput["delta"] = "delta";
-    NameInput["xi"] = "xi";
-    NameInput["eta"] = "eta";
-    NameInput["thetaMul"] = "thetaMul";
-    NameInput["c1"] = "c1";
-    NameInput["c2"] = "c2";
-    NameInput["k"] = "k";
-    NameInput["showPerspective"] = "showPerspective";
-    NameInput["norma"] = "norma";
-    NameInput["kNorma"] = "kNorma";
-    NameInput["start"] = "start";
-})(NameInput || (NameInput = {}));
-/* eslint-enable no-unused-vars, no-shadow */
+"use strict";
 function createGraph3d(data, el) {
     const options2 = {
         width: '100%',
@@ -32,22 +15,14 @@ function createGraph3d(data, el) {
             vertical: 0.4,
             distance: 4.5,
         },
-        yCenter: '40%',
+        yCenter: '50%',
         axisFontSize: 80,
     };
     return new vis.Graph3d(el, data, options2);
 }
-function calcDataSet(k, fromX) {
-    const data = new vis.DataSet();
-    bigData.forEach(([x, y, z], i) => {
-        if ((k === 1 || ((x * 100) % k === 0 && (y * 100) % k === 0)) && x >= fromX) {
-            data.add({
-                x, y, z, style: z,
-            });
-        }
-    });
-    return data;
-}
+const parseHash = () => window.location.hash.slice(1).split('#').map((e) => e.split(':'))
+    // eslint-disable-next-line no-return-assign, no-sequences
+    .reduce((accum, [key, value]) => (accum[key] = value, accum), {});
 (() => {
     const outputWrapper = document.getElementById('outputWrapper');
     if (!outputWrapper) {
@@ -59,10 +34,21 @@ function calcDataSet(k, fromX) {
     const graph3d = createGraph3d(data, outputWrapper);
     const calc = () => {
         // eslint-disable-next-line no-restricted-globals
-        const [k = 1, fromX = 0.1, pr] = window.location.hash.slice(1).split(':').map((e) => (!e || isNaN(+e) ? undefined : +e));
+        const { k = '1', fromX = '-Infinity', pr, filename = '/neural2-3/data.json', yCenter = graph3d.yCenter, } = parseHash();
         console.log({ k, fromX, pr });
-        graph3d.setData(calcDataSet(k, fromX));
-        graph3d.setOptions({ showPerspective: !!pr });
+        const data = new vis.DataSet();
+        import(filename, { assert: { type: "json" } }).then(({ default: bigData }) => {
+            console.log(bigData);
+            bigData.forEach(([x, y, z], i) => {
+                if ((+k === 1 || ((x * 100) % +k === 0 && (y * 100) % +k === 0)) && x >= +fromX) {
+                    data.add({
+                        x, y, z, style: z,
+                    });
+                }
+            });
+            graph3d.setData(data);
+            graph3d.setOptions({ showPerspective: !!+pr, yCenter });
+        });
     };
     window.addEventListener('hashchange', calc);
     calc();

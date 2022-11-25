@@ -14,6 +14,8 @@ var NameInput;
     NameInput["norma"] = "norma";
     NameInput["kNorma"] = "kNorma";
     NameInput["start"] = "start";
+    NameInput["epsilon"] = "epsilon";
+    NameInput["recalc"] = "recalc\t";
 })(NameInput || (NameInput = {}));
 /* eslint-enable no-unused-vars, no-shadow */
 function createGraph3d(data, el) {
@@ -50,7 +52,7 @@ function createGraph3d(data, el) {
 <tr><td>ξ</td><td>${xi}</td></tr>
 <tr><td>θ</td><td>${theta}</td></tr>
 </table>`,
-        yCenter: '40%',
+        yCenter: '50%',
         axisFontSize: 80,
     };
     return new vis.Graph3d(el, data, options2);
@@ -63,6 +65,9 @@ function createR(el) {
         addInput: (name, options) => {
             const span = document.createElement('span');
             span.innerHTML = options?.placeholder || name;
+            const placeholderId = options?.placeholderId;
+            if (placeholderId)
+                span.id = placeholderId;
             el.appendChild(span);
             const input = document.createElement('input');
             input.type = options?.type || 'number';
@@ -96,19 +101,47 @@ function createR(el) {
         },
     };
 }
-function calcDataSet(r) {
+const lengthV = (x, y, z) => Math.sqrt(x * x + y * y + z * z);
+const nextPoint = ({ xi, eta, theta, cosTheta, sinTheta, c1, c2, k, norma, kNorma, delta, }) => {
+    const xiD = 2 * xi
+        - 2 * xi * (xi + eta)
+        - xi * eta * (cosTheta + c2 * sinTheta);
+    const etaD = 2 * eta
+        - 2 * eta * (xi + 3 * eta / 4)
+        - 2 * xi * eta * (cosTheta - c2 * sinTheta)
+        - 2 * k * k * eta;
+    const thetaD = c2 * (2 * xi - eta / 2)
+        + sinTheta * (2 * xi + eta)
+        + c2 * cosTheta * (2 * xi - eta)
+        + 2 * c1 * k * k;
+    const length = norma ? lengthV(xi, etaD, thetaD) * kNorma : 1;
+    return [
+        xi + xiD / length * delta,
+        eta + etaD / length * delta,
+        theta + thetaD / length * delta,
+    ];
+};
+function calcDataSet(r, { c1, c2 } = {}) {
     const data = new vis.DataSet();
     const count = r.getValueAsNumber(NameInput.count);
     const start = r.getValueAsNumber(NameInput.start);
     const delta = r.getValueAsNumber(NameInput.delta);
-    const c1 = r.getValueAsNumber(NameInput.c1);
-    const c2 = r.getValueAsNumber(NameInput.c2);
+    c1 ?? (c1 = r.getValueAsNumber(NameInput.c1));
+    c2 ?? (c2 = r.getValueAsNumber(NameInput.c2));
     const k = r.getValueAsNumber(NameInput.k);
     const norma = r.getValueAsBoolean(NameInput.norma);
     const kNorma = r.getValueAsNumber(NameInput.kNorma);
     let xi = r.getValueAsNumber(NameInput.xi);
     let eta = r.getValueAsNumber(NameInput.eta);
     let theta = r.getValueAsNumber(NameInput.thetaMul) * Math.PI;
+    const dxi = Math.random();
+    const deta = Math.random();
+    const dtheta = 3 - dxi - deta;
+    const epsilon = r.getValueAsNumber(NameInput.epsilon);
+    let xi1 = xi + dxi / 3 * epsilon * (Math.random() > 0.5 ? 1 : -1);
+    let eta1 = eta + deta / 3 * epsilon * (Math.random() > 0.5 ? 1 : -1);
+    let theta1 = theta + dtheta / 3 * epsilon * (Math.random() > 0.5 ? 1 : -1);
+    let lyapunov = 0;
     for (let index = 0; index < count + start; index++) {
         const cosTheta = Math.cos(theta);
         const sinTheta = Math.sin(theta);
@@ -121,23 +154,32 @@ function calcDataSet(r) {
                 theta,
             });
         }
-        const xiD = 2 * xi
-            - 2 * xi * (xi + eta)
-            - xi * eta * (cosTheta + c2 * sinTheta);
-        const etaD = 2 * eta
-            - 2 * eta * (xi + 3 * eta / 4)
-            - 2 * xi * eta * (cosTheta - c2 * sinTheta)
-            - 2 * k * k * eta;
-        const thetaD = c2 * (2 * xi - eta / 2)
-            + sinTheta * (2 * xi + eta)
-            + c2 * cosTheta * (2 * xi - eta)
-            + 2 * c1 * k * k;
-        const length = norma ? Math.sqrt(xi ** 2 + etaD ** 2 + thetaD ** 2) * kNorma : 1;
-        xi += xiD / length * delta;
-        eta += etaD / length * delta;
-        theta += thetaD / length * delta;
+        [xi, eta, theta] = nextPoint({
+            xi, eta, sinTheta, cosTheta, c1, c2, k, delta, kNorma, norma, theta,
+        });
+        [xi1, eta1, theta1] = nextPoint({
+            xi: xi1,
+            eta: eta1,
+            sinTheta: Math.sin(theta1),
+            cosTheta: Math.cos(theta1),
+            c1,
+            c2,
+            k,
+            delta,
+            kNorma,
+            norma,
+            theta,
+        });
+        const dxi1 = xi1 - xi;
+        const deta1 = eta - eta1;
+        const dtheta1 = theta - theta1;
+        const length1 = lengthV(dxi1, deta1, dtheta1);
+        lyapunov += Math.log(length1 / epsilon);
+        xi1 = xi + dxi1 / length1 * epsilon;
+        eta1 = eta + deta1 / length1 * epsilon;
+        theta1 = theta + theta1 / length1 * epsilon;
     }
-    return data;
+    return { data, lyapunov };
 }
 (() => {
     const inputWrapper = document.getElementById('inputWrapper');
@@ -161,19 +203,36 @@ function calcDataSet(r) {
     r.addInput(NameInput.eta, { value: 0.5, placeholder: 'Коэффициент η' }).addEventListener('change', updateData);
     r.addInput(NameInput.thetaMul, { value: 1, placeholder: 'Коэффициент θ / π' }).addEventListener('change', updateData);
     r.addHr();
+    r.addInput(NameInput.epsilon, { value: 0.1, placeholderId: '1' }).addEventListener('change', updateData);
+    const wrapperButton = document.createElement('div');
+    wrapperButton.style.display = 'flex';
+    wrapperButton.style.flexDirection = 'row';
+    inputWrapper.appendChild(wrapperButton);
+    const recalc = document.createElement('button');
+    recalc.innerHTML = '&#8635;';
+    recalc.addEventListener('click', updateData);
+    wrapperButton.appendChild(recalc);
+    const calcHotMap = document.createElement('button');
+    calcHotMap.innerHTML = '🔥';
+    wrapperButton.appendChild(calcHotMap);
+    r.addHr();
     const main = document.createElement('div');
-    main.style.border = '1px solid black';
+    main.style.outline = '1px solid black';
     main.style.width = '200px';
     main.style.height = '200px';
+    main.style.resize = 'both';
+    main.style.overflow = 'overlay';
+    main.style.backgroundImage = 'url(/exp1/hotmap.png)';
+    main.style.backgroundSize = 'contain';
     const cursor = document.createElement('div');
     cursor.style.backgroundColor = 'white';
     cursor.style.width = '10px';
     cursor.style.height = '10px';
     cursor.style.borderRadius = '5px';
     main.style.borderRadius = '5px';
-    cursor.style.border = '1px solid black';
+    cursor.style.outline = '1px solid black';
     main.appendChild(cursor);
-    addInput2D(cursor, main, (x, y) => {
+    const setInput2D = addInput2D(cursor, main, (x, y) => {
         x = 20 * x - 10;
         y = 20 * y - 10;
         let needUpdate = false;
@@ -184,11 +243,16 @@ function calcDataSet(r) {
         }
     });
     inputWrapper.appendChild(main);
-    const graph3d = createGraph3d(calcDataSet(r), outputWrapper);
+    setInput2D((r.getValueAsNumber(NameInput.c1) + 10) / 20, (r.getValueAsNumber(NameInput.c2) + 10) / 20);
+    const graph3d = createGraph3d(calcDataSet(r).data, outputWrapper);
     r.setValueAsBoolean(NameInput.showPerspective, graph3d.showPerspective);
     r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
     function updateData() {
-        graph3d.setData(calcDataSet(r));
+        const { data, lyapunov } = calcDataSet(r);
+        graph3d.setOptions({ style: 'line' });
+        graph3d.setData(data);
+        r.getInput(NameInput.epsilon).previousElementSibling
+            .innerText = lyapunov.toString();
     }
     function updatePerspective() {
         graph3d.setOptions({ showPerspective: this.checked });
@@ -197,6 +261,31 @@ function calcDataSet(r) {
         r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
         updateData();
     }
+    calcHotMap.addEventListener('click', () => {
+        const arr = [];
+        const chanks = [];
+        const mul = 10;
+        for (let p1 = -10 * mul; p1 <= 10 * mul; p1++) {
+            for (let p2 = -10 * mul; p2 <= 10 * mul; p2++) {
+                const c1 = p1 / mul;
+                const c2 = p2 / mul;
+                if (chanks.length % 1000 === 0)
+                    console.log('chanks', chanks.length);
+                chanks.push(Promise.resolve().then(() => {
+                    if (arr.length % 1000 === 0)
+                        console.log('arr', arr.length, c1, c2);
+                    arr.push([
+                        c1,
+                        c2,
+                        calcDataSet(r, { c1, c2 }).lyapunov,
+                    ]);
+                }));
+            }
+        }
+        Promise.all(chanks).then(() => { console.log(arr); });
+        // graph3d.setOptions({ style: 'surface' });
+        // graph3d.setData(data);
+    });
     // const button1 = document.createElement('button');
     // button1.innerText = 'Сгенерить';
     // button1.addEventListener('click', updateData);

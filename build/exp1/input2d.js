@@ -1,12 +1,12 @@
 const between = (value, min, max) => [Math.min(Math.max(value, min), max), (value - min) / (max - min)];
 // eslint-disable-next-line import/prefer-default-export
 export const addInput2D = (cursor, main, cb) => {
+    // (2) подготовить к перемещению:
+    // разместить поверх остального содержимого и в абсолютных координатах
+    cursor.style.position = 'absolute';
+    cursor.style.zIndex = '1000';
+    main.style.position = 'relative';
     cursor.onmousedown = (baseEvent) => {
-        // (2) подготовить к перемещению:
-        // разместить поверх остального содержимого и в абсолютных координатах
-        cursor.style.position = 'absolute';
-        cursor.style.zIndex = '1000';
-        main.style.position = 'relative';
         // переместим в body, чтобы мяч был точно не внутри position:relative
         // main.appendChild(cursor);
         // и установим абсолютно спозиционированный мяч под курсор
@@ -15,10 +15,10 @@ export const addInput2D = (cursor, main, cb) => {
         // передвинуть мяч под координаты курсора
         // и сдвинуть на половину ширины/высоты для центрирования
         function moveAt(x, y) {
-            const maxLeft = mainOffsetWidth - offsetWidth - 1;
-            const maxRight = mainOffsetHeight - offsetHeight - 1;
-            const [left, pLeft] = between(x - offsetWidth / 2, -1, maxLeft);
-            const [top, pRight] = between(y - offsetHeight / 2, -1, maxRight);
+            const maxLeft = mainOffsetWidth - offsetWidth;
+            const maxTop = mainOffsetHeight - offsetHeight;
+            const [left, pLeft] = between(x - offsetWidth / 2, 0, maxLeft);
+            const [top, pRight] = between(y - offsetHeight / 2, 0, maxTop);
             cursor.style.left = `${left}px`;
             cursor.style.top = `${top}px`;
             cb(pLeft, pRight);
@@ -39,5 +39,15 @@ export const addInput2D = (cursor, main, cb) => {
         document.addEventListener('mouseup', onmouseup);
         document.addEventListener('mouseleave', onmouseup);
         cursor.ondragstart = () => false;
+    };
+    return (x, y) => {
+        const { offsetWidth, offsetHeight } = cursor;
+        const { offsetWidth: mainOffsetWidth, offsetHeight: mainOffsetHeight, } = main;
+        const maxLeft = mainOffsetWidth - offsetWidth;
+        const maxTop = mainOffsetHeight - offsetHeight;
+        const left = x * maxLeft;
+        const top = y * maxTop;
+        cursor.style.left = `${left}px`;
+        cursor.style.top = `${top}px`;
     };
 };
