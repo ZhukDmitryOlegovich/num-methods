@@ -34,7 +34,7 @@ const parseHash = () => window.location.hash.slice(1).split('#').map((e) => e.sp
     const graph3d = createGraph3d(data, outputWrapper);
     const calc = () => {
         // eslint-disable-next-line no-restricted-globals
-        const { k = '1', fromX = '-Infinity', pr, filename = '/neural2-3/data.json', yCenter = graph3d.yCenter, } = parseHash();
+        const { k = '1', fromX = '-Infinity', pr, filename = '../../neural2-3/data.json', yCenter = graph3d.yCenter, } = parseHash();
         console.log({ k, fromX, pr });
         const data = new vis.DataSet();
         import(filename, { assert: { type: "json" } }).then(({ default: bigData }) => {

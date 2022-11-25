@@ -214,6 +214,7 @@ function calcDataSet(r, { c1, c2 } = {}) {
     wrapperButton.appendChild(recalc);
     const calcHotMap = document.createElement('button');
     calcHotMap.innerHTML = '🔥';
+    calcHotMap.disabled = true;
     wrapperButton.appendChild(calcHotMap);
     r.addHr();
     const main = document.createElement('div');
@@ -222,7 +223,7 @@ function calcDataSet(r, { c1, c2 } = {}) {
     main.style.height = '200px';
     main.style.resize = 'both';
     main.style.overflow = 'overlay';
-    main.style.backgroundImage = 'url(/exp1/hotmap.png)';
+    main.style.backgroundImage = 'url(./hotmap0.1t.png)';
     main.style.backgroundSize = 'contain';
     const cursor = document.createElement('div');
     cursor.style.backgroundColor = 'white';
@@ -234,7 +235,7 @@ function calcDataSet(r, { c1, c2 } = {}) {
     main.appendChild(cursor);
     const setInput2D = addInput2D(cursor, main, (x, y) => {
         x = 20 * x - 10;
-        y = 20 * y - 10;
+        y = 10 - 20 * y;
         let needUpdate = false;
         needUpdate = r.setValueAsString(NameInput.c1, x.toFixed(2)) || needUpdate;
         needUpdate = r.setValueAsString(NameInput.c2, y.toFixed(2)) || needUpdate;
@@ -243,7 +244,32 @@ function calcDataSet(r, { c1, c2 } = {}) {
         }
     });
     inputWrapper.appendChild(main);
-    setInput2D((r.getValueAsNumber(NameInput.c1) + 10) / 20, (r.getValueAsNumber(NameInput.c2) + 10) / 20);
+    setInput2D((r.getValueAsNumber(NameInput.c1) + 10) / 20, (10 - r.getValueAsNumber(NameInput.c2)) / 20);
+    ['0.1f', '0.1t', '0.3f', '0.05f'].forEach((e) => {
+        const changeHotMap = document.createElement('button');
+        changeHotMap.innerHTML = `🗺️${e}`;
+        changeHotMap.onclick = () => { main.style.backgroundImage = `url(./hotmap${e}.png)`; };
+        wrapperButton.appendChild(changeHotMap);
+    });
+    const upSizeMain = document.createElement('button');
+    upSizeMain.innerHTML = '🍄';
+    upSizeMain.onclick = () => {
+        const size = Math.max(+main.style.width.slice(0, -2), +main.style.height.slice(0, -2));
+        main.style.width = `${size * 1.5}px`;
+        main.style.height = `${size * 1.5}px`;
+    };
+    wrapperButton.appendChild(upSizeMain);
+    const hideProps = document.createElement('button');
+    hideProps.innerHTML = '👀';
+    hideProps.onclick = () => {
+        [...inputWrapper.children].some((e) => {
+            // @ts-ignore
+            e.style.display = e.style.display ? null : 'none';
+            return e === r.getInput(NameInput.epsilon).previousElementSibling
+                .previousElementSibling;
+        });
+    };
+    wrapperButton.appendChild(hideProps);
     const graph3d = createGraph3d(calcDataSet(r).data, outputWrapper);
     r.setValueAsBoolean(NameInput.showPerspective, graph3d.showPerspective);
     r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
@@ -265,6 +291,7 @@ function calcDataSet(r, { c1, c2 } = {}) {
         const arr = [];
         const chanks = [];
         const mul = 10;
+        console.time('calcHotMap');
         for (let p1 = -10 * mul; p1 <= 10 * mul; p1++) {
             for (let p2 = -10 * mul; p2 <= 10 * mul; p2++) {
                 const c1 = p1 / mul;
@@ -282,7 +309,7 @@ function calcDataSet(r, { c1, c2 } = {}) {
                 }));
             }
         }
-        Promise.all(chanks).then(() => { console.log(arr); });
+        Promise.all(chanks).then(() => { console.log(arr); console.timeEnd('calcHotMap'); });
         // graph3d.setOptions({ style: 'surface' });
         // graph3d.setData(data);
     });
