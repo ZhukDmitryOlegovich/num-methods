@@ -17,6 +17,7 @@ function createGraph3d(data, el) {
         },
         yCenter: '50%',
         axisFontSize: 80,
+        tooltip: true,
     };
     return new vis.Graph3d(el, data, options2);
 }
@@ -33,19 +34,21 @@ const parseHash = () => window.location.hash.slice(1).split('#').map((e) => e.sp
     data.add({ x: 1, y: 1, z: 1 });
     const graph3d = createGraph3d(data, outputWrapper);
     const calc = () => {
-        // eslint-disable-next-line no-restricted-globals
-        const { k = '1', fromX = '-Infinity', pr, filename = '../../neural2-3/data.json', yCenter = graph3d.yCenter, } = parseHash();
+        const { k = '1', fromX = '-Infinity', max = 'Infinity', min = '-Infinity', slice, pr, filename = '../../neural2-3/data.json', yCenter = graph3d.yCenter, } = parseHash();
         console.log({ k, fromX, pr });
-        const data = new vis.DataSet();
         import(filename, { assert: { type: "json" } }).then(({ default: bigData }) => {
+            const data = new vis.DataSet();
+            // @ts-ignore
             console.log(bigData);
             bigData.forEach(([x, y, z], i) => {
-                if ((+k === 1 || ((x * 100) % +k === 0 && (y * 100) % +k === 0)) && x >= +fromX) {
+                if ((+k === 1 || ((x * 10) % +k === 0 && (y * 10) % +k === 0)) && x >= +fromX) {
                     data.add({
-                        x, y, z, style: z,
+                        x, y, z, style: Math.max(Math.min(z, +max), +min),
+                        ...(slice === undefined ? {} : { filter: +slice < z ? 'up' : 'down' })
                     });
                 }
             });
+            console.log(data);
             graph3d.setData(data);
             graph3d.setOptions({ showPerspective: !!+pr, yCenter });
         });

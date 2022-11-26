@@ -1,6 +1,9 @@
 const between = (
 	value: number, min: number, max: number,
-) => [Math.min(Math.max(value, min), max), (value - min) / (max - min)];
+) => [
+	Math.min(Math.max(value, min), max),
+	(Math.min(Math.max(value, min), max) - min) / (max - min),
+];
 
 // eslint-disable-next-line import/prefer-default-export
 export const addInput2D = (

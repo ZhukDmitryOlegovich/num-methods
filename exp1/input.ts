@@ -258,6 +258,7 @@ function calcDataSet(r: R, { c1, c2 }: { c1?: number, c2?: number; } = {}) {
 	const wrapperButton = document.createElement('div');
 	wrapperButton.style.display = 'flex';
 	wrapperButton.style.flexDirection = 'row';
+	wrapperButton.style.flexWrap = 'wrap';
 	inputWrapper.appendChild(wrapperButton);
 	const recalc = document.createElement('button');
 	recalc.innerHTML = '&#8635;';
@@ -265,7 +266,7 @@ function calcDataSet(r: R, { c1, c2 }: { c1?: number, c2?: number; } = {}) {
 	wrapperButton.appendChild(recalc);
 	const calcHotMap = document.createElement('button');
 	calcHotMap.innerHTML = '🔥';
-	calcHotMap.disabled = true;
+	calcHotMap.disabled = window.location.hash === '';
 	wrapperButton.appendChild(calcHotMap);
 	r.addHr();
 	const main = document.createElement('div');
@@ -302,7 +303,7 @@ function calcDataSet(r: R, { c1, c2 }: { c1?: number, c2?: number; } = {}) {
 		(10 - r.getValueAsNumber(NameInput.c2)) / 20,
 	);
 
-	['0.1f', '0.1t', '0.3f', '0.05f'].forEach((e) => {
+	['0.1f', '0.1t', '0.3f', '0.05f', 'point'].forEach((e) => {
 		const changeHotMap = document.createElement('button');
 		changeHotMap.innerHTML = `🗺️${e}`;
 		changeHotMap.onclick = () => { main.style.backgroundImage = `url(./hotmap${e}.png)`; };
