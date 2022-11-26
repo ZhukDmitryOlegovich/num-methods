@@ -303,7 +303,7 @@ function calcDataSet(r: R, { c1, c2 }: { c1?: number, c2?: number; } = {}) {
 		(10 - r.getValueAsNumber(NameInput.c2)) / 20,
 	);
 
-	['0.1f', '0.1t', '0.3f', '0.05f', 'point'].forEach((e) => {
+	['0.1f', '0.1t', '0.3f', '0.05f', '0.01f', 'point'].forEach((e) => {
 		const changeHotMap = document.createElement('button');
 		changeHotMap.innerHTML = `🗺️${e}`;
 		changeHotMap.onclick = () => { main.style.backgroundImage = `url(./hotmap${e}.png)`; };

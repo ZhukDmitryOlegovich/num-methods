@@ -43,7 +43,7 @@ const parseHash = () => window.location.hash.slice(1).split('#').map((e) => e.sp
 
 	const calc = () => {
 		const {
-			k = '1', fromX = '-Infinity', max = 'Infinity', min = '-Infinity', slice, pr, filename = '../../neural2-3/data.json', yCenter = graph3d.yCenter,
+			k = '1', fromX = '-Infinity', max = 'Infinity', min = '-Infinity', slice, grid = '1', pr, filename = '../../neural2-3/data.json', yCenter = graph3d.yCenter,
 		} = parseHash();
 
 		console.log({ k, fromX, pr });
@@ -65,7 +65,7 @@ const parseHash = () => window.location.hash.slice(1).split('#').map((e) => e.sp
 
 			console.log(data);
 			graph3d.setData(data);
-			graph3d.setOptions({ showPerspective: !!+pr, yCenter });
+			graph3d.setOptions({ showPerspective: !!+pr, yCenter, showSurfaceGrid: !!+grid });
 		});
 	};
 

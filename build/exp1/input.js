@@ -246,7 +246,7 @@ function calcDataSet(r, { c1, c2 } = {}) {
     });
     inputWrapper.appendChild(main);
     setInput2D((r.getValueAsNumber(NameInput.c1) + 10) / 20, (10 - r.getValueAsNumber(NameInput.c2)) / 20);
-    ['0.1f', '0.1t', '0.3f', '0.05f', 'point'].forEach((e) => {
+    ['0.1f', '0.1t', '0.3f', '0.05f', '0.01f', 'point'].forEach((e) => {
         const changeHotMap = document.createElement('button');
         changeHotMap.innerHTML = `🗺️${e}`;
         changeHotMap.onclick = () => { main.style.backgroundImage = `url(./hotmap${e}.png)`; };
