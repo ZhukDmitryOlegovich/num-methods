@@ -201,8 +201,8 @@ function calcDataSet(r, { c1, c2, type } = {}) {
     r.addHr();
     const main = document.createElement('div');
     main.style.outline = '1px dashed black';
-    main.style.width = '450px';
-    main.style.height = '450px';
+    main.style.width = '500px';
+    main.style.height = '500px';
     main.style.resize = 'both';
     main.style.overflow = 'hidden';
     main.style.backgroundImage = 'url(./hotmappoint.png)';
