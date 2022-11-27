@@ -1,4 +1,5 @@
-import { addInput2D } from './input2d.js';
+import { addInput2D } from '../utils/input2d.js';
+import { createR } from '../utils/r.js';
 /* eslint-disable no-unused-vars, no-shadow */
 var NameInput;
 (function (NameInput) {
@@ -57,50 +58,6 @@ function createGraph3d(data, el) {
     };
     return new vis.Graph3d(el, data, options2);
 }
-const replaceNaN = (value, def) => (Number.isNaN(value) ? def : value);
-function createR(el) {
-    const allInput = {};
-    return {
-        addHr: () => el.appendChild(document.createElement('hr')),
-        addInput: (name, options) => {
-            const span = document.createElement('span');
-            span.innerHTML = options?.placeholder || name;
-            const placeholderId = options?.placeholderId;
-            if (placeholderId)
-                span.id = placeholderId;
-            el.appendChild(span);
-            const input = document.createElement('input');
-            input.type = options?.type || 'number';
-            const value = options?.value;
-            input.placeholder = `${value}`;
-            switch (typeof value) {
-                case 'number':
-                    input.valueAsNumber = value;
-                    break;
-                case 'boolean':
-                    input.checked = value;
-                    break;
-                case 'string':
-                    input.value = value;
-                    break;
-                default: break;
-            }
-            allInput[name] = input;
-            el.appendChild(input);
-            return input;
-        },
-        getInput: (name) => allInput[name],
-        getValueAsNumber: (name) => replaceNaN(allInput[name].valueAsNumber, +allInput[name].placeholder),
-        getValueAsBoolean: (name) => allInput[name].checked,
-        setValueAsBoolean: (name, value) => { allInput[name].checked = value; },
-        setValueAsString: (name, value) => {
-            if (allInput[name].value === value)
-                return false;
-            allInput[name].value = value;
-            return true;
-        },
-    };
-}
 const lengthV = (x, y, z) => Math.sqrt(x * x + y * y + z * z);
 const nextPoint = ({ xi, eta, theta, cosTheta, sinTheta, c1, c2, k, norma, kNorma, delta, }) => {
     const xiD = 2 * xi
@@ -121,31 +78,47 @@ const nextPoint = ({ xi, eta, theta, cosTheta, sinTheta, c1, c2, k, norma, kNorm
         theta + thetaD / length * delta,
     ];
 };
-function calcDataSet(r, { c1, c2 } = {}) {
+const randomV = () => {
+    const x = 2 * Math.random() - 1;
+    const y = 2 * Math.random() - 1;
+    const z = 2 * Math.random() - 1;
+    const len = lengthV(x, y, z);
+    if (len < 0.01)
+        return randomV();
+    return [x / len, y / len, z / len];
+};
+function calcDataSet(r, { c1, c2, type } = {}) {
     const data = new vis.DataSet();
     const count = r.getValueAsNumber(NameInput.count);
     const start = r.getValueAsNumber(NameInput.start);
     const delta = r.getValueAsNumber(NameInput.delta);
     c1 ?? (c1 = r.getValueAsNumber(NameInput.c1));
     c2 ?? (c2 = r.getValueAsNumber(NameInput.c2));
+    type ?? (type = 'lyapunov');
     const k = r.getValueAsNumber(NameInput.k);
     const norma = r.getValueAsBoolean(NameInput.norma);
     const kNorma = r.getValueAsNumber(NameInput.kNorma);
     let xi = r.getValueAsNumber(NameInput.xi);
     let eta = r.getValueAsNumber(NameInput.eta);
     let theta = r.getValueAsNumber(NameInput.thetaMul) * Math.PI;
-    const dxi = Math.random();
-    const deta = Math.random();
-    const dtheta = 3 - dxi - deta;
+    const [dxi, deta, dtheta] = randomV();
     const epsilon = r.getValueAsNumber(NameInput.epsilon);
-    let xi1 = xi + dxi / 3 * epsilon * (Math.random() > 0.5 ? 1 : -1);
-    let eta1 = eta + deta / 3 * epsilon * (Math.random() > 0.5 ? 1 : -1);
-    let theta1 = theta + dtheta / 3 * epsilon * (Math.random() > 0.5 ? 1 : -1);
+    let xi1 = xi + dxi * epsilon;
+    let eta1 = eta + deta * epsilon;
+    let theta1 = theta + dtheta * epsilon;
     let lyapunov = 0;
+    const simpleData = [];
     for (let index = 0; index < count + start; index++) {
         const cosTheta = Math.cos(theta);
         const sinTheta = Math.sin(theta);
         if (index >= start) {
+            if (type === 'simpleData') {
+                simpleData.push([
+                    xi * sinTheta,
+                    xi * cosTheta,
+                    eta,
+                ]);
+            }
             data.add({
                 x: xi * sinTheta,
                 y: xi * cosTheta,
@@ -157,29 +130,31 @@ function calcDataSet(r, { c1, c2 } = {}) {
         [xi, eta, theta] = nextPoint({
             xi, eta, sinTheta, cosTheta, c1, c2, k, delta, kNorma, norma, theta,
         });
-        [xi1, eta1, theta1] = nextPoint({
-            xi: xi1,
-            eta: eta1,
-            sinTheta: Math.sin(theta1),
-            cosTheta: Math.cos(theta1),
-            c1,
-            c2,
-            k,
-            delta,
-            kNorma,
-            norma,
-            theta,
-        });
-        const dxi1 = xi1 - xi;
-        const deta1 = eta - eta1;
-        const dtheta1 = theta - theta1;
-        const length1 = lengthV(dxi1, deta1, dtheta1);
-        lyapunov += Math.log(length1 / epsilon);
-        xi1 = xi + dxi1 / length1 * epsilon;
-        eta1 = eta + deta1 / length1 * epsilon;
-        theta1 = theta + theta1 / length1 * epsilon;
+        if (type === 'lyapunov') {
+            [xi1, eta1, theta1] = nextPoint({
+                xi: xi1,
+                eta: eta1,
+                sinTheta: Math.sin(theta1),
+                cosTheta: Math.cos(theta1),
+                c1,
+                c2,
+                k,
+                delta,
+                kNorma,
+                norma,
+                theta,
+            });
+            const dxi1 = xi1 - xi;
+            const deta1 = eta - eta1;
+            const dtheta1 = theta - theta1;
+            const length1 = lengthV(dxi1, deta1, dtheta1);
+            lyapunov += Math.log(length1 / epsilon);
+            xi1 = xi + dxi1 / length1 * epsilon;
+            eta1 = eta + deta1 / length1 * epsilon;
+            theta1 = theta + theta1 / length1 * epsilon;
+        }
     }
-    return { data, lyapunov };
+    return { data, lyapunov, simpleData };
 }
 (() => {
     const inputWrapper = document.getElementById('inputWrapper');
@@ -224,7 +199,7 @@ function calcDataSet(r, { c1, c2 } = {}) {
     main.style.height = '200px';
     main.style.resize = 'both';
     main.style.overflow = 'overlay';
-    main.style.backgroundImage = 'url(./hotmap0.1t.png)';
+    main.style.backgroundImage = 'url(./hotmap0.001f.png)';
     main.style.backgroundSize = 'contain';
     const cursor = document.createElement('div');
     cursor.style.backgroundColor = 'white';
@@ -245,8 +220,11 @@ function calcDataSet(r, { c1, c2 } = {}) {
         }
     });
     inputWrapper.appendChild(main);
-    setInput2D((r.getValueAsNumber(NameInput.c1) + 10) / 20, (10 - r.getValueAsNumber(NameInput.c2)) / 20);
-    ['0.1f', '0.1t', '0.3f', '0.05f', '0.01f', 'point'].forEach((e) => {
+    const syncInput2D = () => setInput2D((r.getValueAsNumber(NameInput.c1) + 10) / 20, (10 - r.getValueAsNumber(NameInput.c2)) / 20);
+    syncInput2D();
+    r.getInput(NameInput.c1).addEventListener('change', syncInput2D);
+    r.getInput(NameInput.c2).addEventListener('change', syncInput2D);
+    ['0.1f', '0.1t', '0.3f', '0.05f', '0.01f', '0.001f', 'point'].forEach((e) => {
         const changeHotMap = document.createElement('button');
         changeHotMap.innerHTML = `🗺️${e}`;
         changeHotMap.onclick = () => { main.style.backgroundImage = `url(./hotmap${e}.png)`; };
@@ -279,7 +257,7 @@ function calcDataSet(r, { c1, c2 } = {}) {
         graph3d.setOptions({ style: 'line' });
         graph3d.setData(data);
         r.getInput(NameInput.epsilon).previousElementSibling
-            .innerText = lyapunov.toString();
+            .innerText = `Показатель Ляпунова: ${lyapunov.toString()}`;
     }
     function updatePerspective() {
         graph3d.setOptions({ showPerspective: this.checked });
@@ -288,10 +266,24 @@ function calcDataSet(r, { c1, c2 } = {}) {
         r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
         updateData();
     }
-    calcHotMap.addEventListener('click', () => {
+    const calcRadius = (simpleData) => {
+        const [sumX, sumY, sumZ] = simpleData.reduce((accum, sd) => {
+            accum[0] += sd[0];
+            accum[1] += sd[1];
+            accum[2] += sd[2];
+            return accum;
+        }, [0, 0, 0]);
+        const midX = sumX / simpleData.length;
+        const midY = sumY / simpleData.length;
+        const midZ = sumZ / simpleData.length;
+        return simpleData.reduce((radius, sd) => Math.max(radius, lengthV(sd[0] - midX, sd[1] - midY, sd[2] - midZ)), 0);
+    };
+    calcHotMap.addEventListener('click', (event) => {
         const arr = [];
         const chanks = [];
         const mul = 10;
+        const isRadius = event.ctrlKey;
+        console.log({ isRadius });
         console.time('calcHotMap');
         for (let p1 = -10 * mul; p1 <= 10 * mul; p1++) {
             for (let p2 = -10 * mul; p2 <= 10 * mul; p2++) {
@@ -302,10 +294,11 @@ function calcDataSet(r, { c1, c2 } = {}) {
                 chanks.push(Promise.resolve().then(() => {
                     if (arr.length % 1000 === 0)
                         console.log('arr', arr.length, c1, c2);
+                    const { lyapunov, simpleData } = calcDataSet(r, { c1, c2, type: isRadius ? 'simpleData' : 'lyapunov' });
                     arr.push([
                         c1,
                         c2,
-                        calcDataSet(r, { c1, c2 }).lyapunov,
+                        isRadius ? calcRadius(simpleData) : lyapunov,
                     ]);
                 }));
             }
