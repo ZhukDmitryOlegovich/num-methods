@@ -5,26 +5,48 @@ export type TH<T extends 'number' | 'checkbox'> = {
 	| (T extends 'checkbox' ? boolean : never),
 };
 
+export type Other = {
+	placeholder?: string,
+	dataset?: Record<string, string>,
+	className?: string,
+};
+
 export const replaceNaN = (value: number, def: number) => (Number.isNaN(value) ? def : value);
 
-export function createR(el: HTMLElement) {
+const addDataset = (el: HTMLElement, dataset: Other['dataset']) => Object.entries(dataset || {})
+	.forEach(([key, value]) => {
+		el.dataset[key] = value;
+	});
+
+export function createR(el: HTMLElement, parent?: any) {
 	const allInput: Record<string, HTMLInputElement> = {};
-	return {
+	const r = {
+		origin: el,
+		registerInput: (name: string, input: HTMLInputElement) => {
+			allInput[name] = input;
+			parent?.registerInput(name, input);
+		},
 		addHr: () => el.appendChild(document.createElement('hr')),
-		addInput: (name: string, options?: (TH<'number'> | TH<'checkbox'>) & {
-			placeholder?: string,
-			dataset?: Record<string, string>;
-		}) => {
-			const span = document.createElement('span');
-			span.innerHTML = options?.placeholder || name;
-			el.appendChild(span);
-			const input = document.createElement('input');
-			input.type = options?.type || 'number';
+		addDataset: (dataset: Other['dataset']) => addDataset(el, dataset),
+		createWrap: (options?: Other) => {
+			const div = document.createElement('div');
 			Object.entries(options?.dataset || {})
 				.forEach(([key, value]) => {
-					input.dataset[key] = value;
-					span.dataset[key] = value;
+					div.dataset[key] = value;
 				});
+			div.className = options?.className || '';
+			el.appendChild(div);
+			return createR(div, r);
+		},
+		addInput: (name: string, options?: (TH<'number'> | TH<'checkbox'>) & Other) => {
+			const div = document.createElement('div');
+			div.className = options?.className || 'column';
+			const span = document.createElement('span');
+			span.innerHTML = options?.placeholder || name;
+			div.appendChild(span);
+			const input = document.createElement('input');
+			input.type = options?.type || 'number';
+			addDataset(div, options?.dataset);
 			const value = options?.value;
 			input.placeholder = `${value}`;
 			switch (typeof value) {
@@ -39,8 +61,9 @@ export function createR(el: HTMLElement) {
 					break;
 				default: break;
 			}
-			allInput[name] = input;
-			el.appendChild(input);
+			r.registerInput(name, input);
+			div.appendChild(input);
+			el.appendChild(div);
 			return input;
 		},
 		getInput: (name: string) => allInput[name],
@@ -55,6 +78,7 @@ export function createR(el: HTMLElement) {
 			return true;
 		},
 	};
+	return r;
 }
 
 export type R = ReturnType<typeof createR>;

@@ -30,9 +30,37 @@ hr {
 	user-select: none;
 }
 
+.column {
+	display: flex;
+	flex-direction: column;
+	align-items: baseline;
+	flex-grow: 1;
+}
+
+[data-hide-on] .column.transform {
+	flex-direction: row;
+}
+
+.row {
+	display: flex;
+	flex-direction: row;
+	align-items: baseline;
+	flex-grow: 1;
+}
+
+input[type="checkbox"] {
+	margin-left: 0;
+	width: 15px;
+	height: 15px;
+}
+
 .flex-fill {
 	display: flex;
     flex-grow: 1;
+}
+
+[data-hide-on] .hide {
+	display: none;
 }
 
 p, h1, h2, h3, h4, h5, h6 {
@@ -99,5 +127,4 @@ code {
 .table > * {
 	display: flex;
 	flex-direction: column;
-	align-items: baseline;
 }

@@ -70,6 +70,7 @@ function createGraph3d(data: any, el: HTMLElement) {
 	return new vis.Graph3d(el, data, options2);
 }
 
+const lengthV2 = (x: number, y: number, z: number) => (x * x + y * y + z * z);
 const lengthV = (x: number, y: number, z: number) => Math.sqrt(x * x + y * y + z * z);
 
 const nextPoint = ({
@@ -201,22 +202,27 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 
 	const r = createR(inputWrapper);
 
-	r.addInput(NameInput.count, { value: 1000, placeholder: 'Кол-во точек на графике' }).addEventListener('change', updateData);
-	r.addInput(NameInput.start, { value: 500, placeholder: 'Начать с точки с индексом' }).addEventListener('change', updateData);
-	r.addInput(NameInput.delta, { value: 0.02, placeholder: 'Шаг градиента' }).addEventListener('change', updateData);
-	r.addInput(NameInput.norma, { type: 'checkbox', value: false, placeholder: 'Нормализовывать градиент' }).addEventListener('change', updateNorma);
-	r.addInput(NameInput.kNorma, { value: 0.12, placeholder: 'Коэффициент нормализации' }).addEventListener('change', updateData);
-	r.addInput(NameInput.showPerspective, { type: 'checkbox', placeholder: 'Использовать перспективу' }).addEventListener('change', updatePerspective);
+	const b1 = r.createWrap({ className: 'row flex-fill hide' });
+	const l1 = b1.createWrap({ className: 'column flex-fill' });
+	l1.addInput(NameInput.count, { value: 1000, placeholder: 'Кол-во точек на графике' }).addEventListener('change', updateData);
+	l1.addInput(NameInput.start, { value: 500, placeholder: 'Начать с точки с индексом' }).addEventListener('change', updateData);
+	l1.addInput(NameInput.delta, { value: 0.02, placeholder: 'Шаг градиента' }).addEventListener('change', updateData);
+	const r1 = b1.createWrap({ className: 'column flex-fill' });
+	r1.addInput(NameInput.norma, { type: 'checkbox', value: false, placeholder: 'Нормализовывать градиент' }).addEventListener('change', updateNorma);
+	r1.addInput(NameInput.kNorma, { value: 0.12, placeholder: 'Коэффициент нормализации' }).addEventListener('change', updateData);
+	r1.addInput(NameInput.showPerspective, { type: 'checkbox', placeholder: 'Использовать перспективу' }).addEventListener('change', updatePerspective);
+	r.addHr().className = 'hide';
+	const b2 = r.createWrap({ className: 'row flex-fill' });
+	const l2 = b2.createWrap({ className: 'column flex-fill transform' });
+	l2.addInput(NameInput.c1, { value: 7, placeholder: 'Коэффициент c<sub>1</sub>' }).addEventListener('change', updateData);
+	l2.addInput(NameInput.c2, { value: -6, placeholder: 'Коэффициент c<sub>2</sub>' }).addEventListener('change', updateData);
+	l2.addInput(NameInput.k, { value: 1, placeholder: 'Коэффициент k', className: 'hide column' }).addEventListener('change', updateData);
+	const r2 = b2.createWrap({ className: 'column flex-fill hide' });
+	r2.addInput(NameInput.xi, { value: 0.5, placeholder: 'Коэффициент ξ' }).addEventListener('change', updateData);
+	r2.addInput(NameInput.eta, { value: 0.5, placeholder: 'Коэффициент η' }).addEventListener('change', updateData);
+	r2.addInput(NameInput.thetaMul, { value: 1, placeholder: 'Коэффициент θ / π' }).addEventListener('change', updateData);
 	r.addHr();
-	r.addInput(NameInput.c1, { value: 7, placeholder: 'Коэффициент c<sub>1</sub>', dataset: { not_hide: '' } }).addEventListener('change', updateData);
-	r.addInput(NameInput.c2, { value: -6, placeholder: 'Коэффициент c<sub>2</sub>', dataset: { not_hide: '' } }).addEventListener('change', updateData);
-	r.addInput(NameInput.k, { value: 1, placeholder: 'Коэффициент k' }).addEventListener('change', updateData);
-	r.addHr().dataset.not_hide = '';
-	r.addInput(NameInput.xi, { value: 0.5, placeholder: 'Коэффициент ξ' }).addEventListener('change', updateData);
-	r.addInput(NameInput.eta, { value: 0.5, placeholder: 'Коэффициент η' }).addEventListener('change', updateData);
-	r.addInput(NameInput.thetaMul, { value: 1, placeholder: 'Коэффициент θ / π' }).addEventListener('change', updateData);
-	r.addHr();
-	r.addInput(NameInput.epsilon, { value: 0.1, placeholder: 'Показатель Ляпунова' }).addEventListener('change', updateData);
+	r.addInput(NameInput.epsilon, { value: 0.001, placeholder: 'Показатель Ляпунова' }).addEventListener('change', updateData);
 	const wrapperButton = document.createElement('div');
 	wrapperButton.style.display = 'flex';
 	wrapperButton.style.flexDirection = 'row';
@@ -228,24 +234,24 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	wrapperButton.appendChild(recalc);
 	const calcHotMap = document.createElement('button');
 	calcHotMap.innerHTML = '🔥';
-	calcHotMap.disabled = window.location.hash === '';
 	wrapperButton.appendChild(calcHotMap);
 	r.addHr();
 	const main = document.createElement('div');
-	main.style.outline = '1px solid black';
-	main.style.width = '200px';
-	main.style.height = '200px';
+	main.style.outline = '1px dashed black';
+	main.style.width = '450px';
+	main.style.height = '450px';
 	main.style.resize = 'both';
 	main.style.overflow = 'hidden';
-	main.style.backgroundImage = 'url(./hotmap0.001f.png)';
+	main.style.backgroundImage = 'url(./hotmappoint.png)';
 	main.style.backgroundSize = 'contain';
+	main.style.borderRadius = '5px';
+	main.style.cursor = 'crosshair';
 	const cursor = document.createElement('div');
 	cursor.style.backgroundColor = 'white';
-	cursor.style.width = '10px';
-	cursor.style.height = '10px';
+	cursor.style.width = '4px';
+	cursor.style.height = '4px';
 	cursor.style.borderRadius = '5px';
-	main.style.borderRadius = '5px';
-	cursor.style.outline = '1px solid black';
+	cursor.style.outline = '1px auto black';
 	main.appendChild(cursor);
 	const setInput2D = addInput2D(cursor, main, (x, y) => {
 		x = 20 * x - 10;
@@ -280,16 +286,13 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	let open = true;
 	hideProps.innerHTML = '👀';
 	hideProps.onclick = () => {
-		(<HTMLElement[]>[...inputWrapper.children]).some((e) => {
-			if (e.dataset.not_hide == null) {
-				// @ts-ignore
-				e.style.display = e.style.display ? null : 'none';
-			}
-			return e === r.getInput(NameInput.epsilon).previousElementSibling!
-				.previousElementSibling;
-		});
+		if (inputWrapper.dataset.hideOn == null) {
+			inputWrapper.dataset.hideOn = '';
+		} else {
+			delete inputWrapper.dataset.hideOn;
+		}
 
-		const size = open ? 680 : 200;
+		const size = open ? 700 : 500;
 		main.style.width = `${size}px`;
 		main.style.height = `${size}px`;
 
@@ -297,9 +300,10 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	};
 	wrapperButton.appendChild(hideProps);
 
-	const { hotmap, see } = parseHash();
+	const { hotmap, see, calchot } = parseHash();
 	if (hotmap) document.getElementById(`hotmap${hotmap}`)?.click();
 	if (+see) hideProps.click();
+	calcHotMap.disabled = !+calchot;
 
 	const graph3d = (() => {
 		const { data, lyapunov } = calcDataSet(r);
@@ -322,10 +326,12 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 		const midY = sumY / simpleData.length;
 		const midZ = sumZ / simpleData.length;
 
-		return simpleData.reduce((radius, sd) => Math.max(
-			radius,
-			lengthV(sd[0] - midX, sd[1] - midY, sd[2] - midZ),
-		), 0);
+		return Math.sqrt(
+			simpleData.reduce(
+				(sum, sd) => sum + lengthV2(sd[0] - midX, sd[1] - midY, sd[2] - midZ),
+				0,
+			),
+		);
 	};
 
 	function updateData() {
@@ -357,7 +363,7 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 			for (let p2 = -10 * mul; p2 <= 10 * mul; p2++) {
 				const c1 = p1 / mul;
 				const c2 = p2 / mul;
-				if (chanks.length % 1000 === 0) console.log('chanks', chanks.length);
+				if (chanks.length % 10000 === 0) console.log('chanks', chanks.length);
 				chanks.push(
 					Promise.resolve().then(() => {
 						if (arr.length % 1000 === 0) console.log('arr', arr.length, c1, c2);

@@ -14,7 +14,11 @@ function createGraph3d(data: any, el: HTMLElement) {
 		keepAspectRatio: true,
 		verticalRatio: 1.0,
 		legendLabel: 'distance',
-		cameraPosition: {
+		cameraPosition: +(parseHash().top ?? 1) ? {
+			horizontal: 0,
+			vertical: Math.PI / 2,
+			distance: 2.6,
+		} : {
 			horizontal: 0.7,
 			vertical: 0.4,
 			distance: 4.5,
@@ -44,7 +48,7 @@ function createGraph3d(data: any, el: HTMLElement) {
 	const calc = () => {
 		const {
 			k = '1', fromX = '-Infinity', max = 'Infinity', min = '-Infinity',
-			slice, grid = '1', pr, filename = '../../neural2-3/data.json', yCenter = graph3d.yCenter,
+			slice, grid = '0', pr, filename = '../../neural2-3/data.json', yCenter = graph3d.yCenter,
 			style = graph3d.style,
 		} = parseHash();
 
@@ -85,12 +89,12 @@ function createGraph3d(data: any, el: HTMLElement) {
 	// const p = document.createElement('p');
 	// output1.appendChild(p);
 
-	// graph3d.on('cameraPositionChange', (event: any) => {
-	// 	console.log(`${'The camera position changed to:\n'
-	// 	+ 'Horizontal: '}${event.horizontal}\n`
-	// 	+ `Vertical: ${event.vertical}\n`
-	// 	+ `Distance: ${event.distance}`);
-	// });
+	graph3d.on('cameraPositionChange', (event: any) => {
+		console.log(`${'The camera position changed to:\n'
+		+ 'Horizontal: '}${event.horizontal}\n`
+		+ `Vertical: ${event.vertical}\n`
+		+ `Distance: ${event.distance}`);
+	});
 
 	// @ts-ignore
 	window.graph3d = graph3d;

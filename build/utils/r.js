@@ -1,19 +1,37 @@
 export const replaceNaN = (value, def) => (Number.isNaN(value) ? def : value);
-export function createR(el) {
+const addDataset = (el, dataset) => Object.entries(dataset || {})
+    .forEach(([key, value]) => {
+    el.dataset[key] = value;
+});
+export function createR(el, parent) {
     const allInput = {};
-    return {
+    const r = {
+        origin: el,
+        registerInput: (name, input) => {
+            allInput[name] = input;
+            parent?.registerInput(name, input);
+        },
         addHr: () => el.appendChild(document.createElement('hr')),
-        addInput: (name, options) => {
-            const span = document.createElement('span');
-            span.innerHTML = options?.placeholder || name;
-            el.appendChild(span);
-            const input = document.createElement('input');
-            input.type = options?.type || 'number';
+        addDataset: (dataset) => addDataset(el, dataset),
+        createWrap: (options) => {
+            const div = document.createElement('div');
             Object.entries(options?.dataset || {})
                 .forEach(([key, value]) => {
-                input.dataset[key] = value;
-                span.dataset[key] = value;
+                div.dataset[key] = value;
             });
+            div.className = options?.className || '';
+            el.appendChild(div);
+            return createR(div, r);
+        },
+        addInput: (name, options) => {
+            const div = document.createElement('div');
+            div.className = options?.className || 'column';
+            const span = document.createElement('span');
+            span.innerHTML = options?.placeholder || name;
+            div.appendChild(span);
+            const input = document.createElement('input');
+            input.type = options?.type || 'number';
+            addDataset(div, options?.dataset);
             const value = options?.value;
             input.placeholder = `${value}`;
             switch (typeof value) {
@@ -28,8 +46,9 @@ export function createR(el) {
                     break;
                 default: break;
             }
-            allInput[name] = input;
-            el.appendChild(input);
+            r.registerInput(name, input);
+            div.appendChild(input);
+            el.appendChild(div);
             return input;
         },
         getInput: (name) => allInput[name],
@@ -43,4 +62,5 @@ export function createR(el) {
             return true;
         },
     };
+    return r;
 }
