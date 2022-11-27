@@ -34,7 +34,7 @@ function createGraph3d(data, el) {
         cameraPosition: {
             horizontal: 0.7,
             vertical: 0.4,
-            distance: 4.5,
+            distance: 2.3,
         },
         xLabel: 'ξ sin θ',
         yLabel: 'ξ cos θ',
@@ -54,7 +54,7 @@ function createGraph3d(data, el) {
 <tr><td>ξ</td><td>${xi}</td></tr>
 <tr><td>θ</td><td>${theta}</td></tr>
 </table>`,
-        yCenter: '50%',
+        yCenter: '38%',
         axisFontSize: 80,
     };
     return new vis.Graph3d(el, data, options2);
@@ -167,8 +167,8 @@ function calcDataSet(r, { c1, c2, type } = {}) {
     const r = createR(inputWrapper);
     const b1 = r.createWrap({ className: 'row flex-fill hide' });
     const l1 = b1.createWrap({ className: 'column flex-fill' });
-    l1.addInput(NameInput.count, { value: 1000, placeholder: 'Кол-во точек на графике' }).addEventListener('change', updateData);
-    l1.addInput(NameInput.start, { value: 500, placeholder: 'Начать с точки с индексом' }).addEventListener('change', updateData);
+    l1.addInput(NameInput.count, { value: +parseHash().count || 1000, placeholder: 'Кол-во точек на графике' }).addEventListener('change', updateData);
+    l1.addInput(NameInput.start, { value: +parseHash().start || 500, placeholder: 'Начать с точки с индексом' }).addEventListener('change', updateData);
     l1.addInput(NameInput.delta, { value: 0.02, placeholder: 'Шаг градиента' }).addEventListener('change', updateData);
     const r1 = b1.createWrap({ className: 'column flex-fill' });
     r1.addInput(NameInput.norma, { type: 'checkbox', value: false, placeholder: 'Нормализовывать градиент' }).addEventListener('change', updateNorma);
@@ -238,6 +238,12 @@ function calcDataSet(r, { c1, c2, type } = {}) {
         changeHotMap.onclick = () => { main.style.backgroundImage = `url(./hotmap${e}.png)`; };
         wrapperButton.appendChild(changeHotMap);
     });
+    const graph3d = (() => {
+        const { data, lyapunov } = calcDataSet(r);
+        r.getInput(NameInput.epsilon).previousElementSibling
+            .innerText = `Показатель Ляпунова: ${lyapunov.toString()}`;
+        return createGraph3d(data, outputWrapper);
+    })();
     const hideProps = document.createElement('button');
     let open = true;
     hideProps.innerHTML = '👀';
@@ -251,6 +257,8 @@ function calcDataSet(r, { c1, c2, type } = {}) {
         const size = open ? 700 : 500;
         main.style.width = `${size}px`;
         main.style.height = `${size}px`;
+        graph3d.redraw();
+        setTimeout(() => graph3d.redraw(), 10);
         open = !open;
     };
     wrapperButton.appendChild(hideProps);
@@ -260,12 +268,6 @@ function calcDataSet(r, { c1, c2, type } = {}) {
     if (+see)
         hideProps.click();
     calcHotMap.disabled = !+calchot;
-    const graph3d = (() => {
-        const { data, lyapunov } = calcDataSet(r);
-        r.getInput(NameInput.epsilon).previousElementSibling
-            .innerText = `Показатель Ляпунова: ${lyapunov.toString()}`;
-        return createGraph3d(data, outputWrapper);
-    })();
     r.setValueAsBoolean(NameInput.showPerspective, graph3d.showPerspective);
     r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
     const calcRadius = (simpleData) => {

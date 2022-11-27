@@ -89,12 +89,12 @@ function createGraph3d(data: any, el: HTMLElement) {
 	// const p = document.createElement('p');
 	// output1.appendChild(p);
 
-	graph3d.on('cameraPositionChange', (event: any) => {
-		console.log(`${'The camera position changed to:\n'
-		+ 'Horizontal: '}${event.horizontal}\n`
-		+ `Vertical: ${event.vertical}\n`
-		+ `Distance: ${event.distance}`);
-	});
+	// graph3d.on('cameraPositionChange', (event: any) => {
+	// 	console.log(`${'The camera position changed to:\n'
+	// 	+ 'Horizontal: '}${event.horizontal}\n`
+	// 	+ `Vertical: ${event.vertical}\n`
+	// 	+ `Distance: ${event.distance}`);
+	// });
 
 	// @ts-ignore
 	window.graph3d = graph3d;
