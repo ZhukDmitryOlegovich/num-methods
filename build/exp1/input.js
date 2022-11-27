@@ -1,4 +1,5 @@
 import { addInput2D } from '../utils/input2d.js';
+import { parseHash } from '../utils/parseHash.js';
 import { createR } from '../utils/r.js';
 /* eslint-disable no-unused-vars, no-shadow */
 var NameInput;
@@ -112,7 +113,7 @@ function calcDataSet(r, { c1, c2, type } = {}) {
         const cosTheta = Math.cos(theta);
         const sinTheta = Math.sin(theta);
         if (index >= start) {
-            if (type === 'simpleData') {
+            if (type === 'simpleData' || type === 'all') {
                 simpleData.push([
                     xi * sinTheta,
                     xi * cosTheta,
@@ -130,7 +131,7 @@ function calcDataSet(r, { c1, c2, type } = {}) {
         [xi, eta, theta] = nextPoint({
             xi, eta, sinTheta, cosTheta, c1, c2, k, delta, kNorma, norma, theta,
         });
-        if (type === 'lyapunov') {
+        if (type === 'lyapunov' || type === 'all') {
             [xi1, eta1, theta1] = nextPoint({
                 xi: xi1,
                 eta: eta1,
@@ -170,15 +171,15 @@ function calcDataSet(r, { c1, c2, type } = {}) {
     r.addInput(NameInput.kNorma, { value: 0.12, placeholder: 'Коэффициент нормализации' }).addEventListener('change', updateData);
     r.addInput(NameInput.showPerspective, { type: 'checkbox', placeholder: 'Использовать перспективу' }).addEventListener('change', updatePerspective);
     r.addHr();
-    r.addInput(NameInput.c1, { value: 7, placeholder: 'Коэффициент c<sub>1</sub>' }).addEventListener('change', updateData);
-    r.addInput(NameInput.c2, { value: -6, placeholder: 'Коэффициент c<sub>2</sub>' }).addEventListener('change', updateData);
+    r.addInput(NameInput.c1, { value: 7, placeholder: 'Коэффициент c<sub>1</sub>', dataset: { not_hide: '' } }).addEventListener('change', updateData);
+    r.addInput(NameInput.c2, { value: -6, placeholder: 'Коэффициент c<sub>2</sub>', dataset: { not_hide: '' } }).addEventListener('change', updateData);
     r.addInput(NameInput.k, { value: 1, placeholder: 'Коэффициент k' }).addEventListener('change', updateData);
-    r.addHr();
+    r.addHr().dataset.not_hide = '';
     r.addInput(NameInput.xi, { value: 0.5, placeholder: 'Коэффициент ξ' }).addEventListener('change', updateData);
     r.addInput(NameInput.eta, { value: 0.5, placeholder: 'Коэффициент η' }).addEventListener('change', updateData);
     r.addInput(NameInput.thetaMul, { value: 1, placeholder: 'Коэффициент θ / π' }).addEventListener('change', updateData);
     r.addHr();
-    r.addInput(NameInput.epsilon, { value: 0.1, placeholderId: '1' }).addEventListener('change', updateData);
+    r.addInput(NameInput.epsilon, { value: 0.1, placeholder: 'Показатель Ляпунова' }).addEventListener('change', updateData);
     const wrapperButton = document.createElement('div');
     wrapperButton.style.display = 'flex';
     wrapperButton.style.flexDirection = 'row';
@@ -198,7 +199,7 @@ function calcDataSet(r, { c1, c2, type } = {}) {
     main.style.width = '200px';
     main.style.height = '200px';
     main.style.resize = 'both';
-    main.style.overflow = 'overlay';
+    main.style.overflow = 'hidden';
     main.style.backgroundImage = 'url(./hotmap0.001f.png)';
     main.style.backgroundSize = 'contain';
     const cursor = document.createElement('div');
@@ -227,45 +228,41 @@ function calcDataSet(r, { c1, c2, type } = {}) {
     ['0.1f', '0.1t', '0.3f', '0.05f', '0.01f', '0.001f', 'point'].forEach((e) => {
         const changeHotMap = document.createElement('button');
         changeHotMap.innerHTML = `🗺️${e}`;
+        changeHotMap.id = `hotmap${e}`;
         changeHotMap.onclick = () => { main.style.backgroundImage = `url(./hotmap${e}.png)`; };
         wrapperButton.appendChild(changeHotMap);
     });
-    const upSizeMain = document.createElement('button');
-    upSizeMain.innerHTML = '🍄';
-    upSizeMain.onclick = () => {
-        const size = Math.max(+main.style.width.slice(0, -2), +main.style.height.slice(0, -2));
-        main.style.width = `${size * 1.5}px`;
-        main.style.height = `${size * 1.5}px`;
-    };
-    wrapperButton.appendChild(upSizeMain);
     const hideProps = document.createElement('button');
+    let open = true;
     hideProps.innerHTML = '👀';
     hideProps.onclick = () => {
         [...inputWrapper.children].some((e) => {
-            // @ts-ignore
-            e.style.display = e.style.display ? null : 'none';
+            if (e.dataset.not_hide == null) {
+                // @ts-ignore
+                e.style.display = e.style.display ? null : 'none';
+            }
             return e === r.getInput(NameInput.epsilon).previousElementSibling
                 .previousElementSibling;
         });
+        const size = open ? 680 : 200;
+        main.style.width = `${size}px`;
+        main.style.height = `${size}px`;
+        open = !open;
     };
     wrapperButton.appendChild(hideProps);
-    const graph3d = createGraph3d(calcDataSet(r).data, outputWrapper);
-    r.setValueAsBoolean(NameInput.showPerspective, graph3d.showPerspective);
-    r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
-    function updateData() {
+    const { hotmap, see } = parseHash();
+    if (hotmap)
+        document.getElementById(`hotmap${hotmap}`)?.click();
+    if (+see)
+        hideProps.click();
+    const graph3d = (() => {
         const { data, lyapunov } = calcDataSet(r);
-        graph3d.setOptions({ style: 'line' });
-        graph3d.setData(data);
         r.getInput(NameInput.epsilon).previousElementSibling
             .innerText = `Показатель Ляпунова: ${lyapunov.toString()}`;
-    }
-    function updatePerspective() {
-        graph3d.setOptions({ showPerspective: this.checked });
-    }
-    function updateNorma() {
-        r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
-        updateData();
-    }
+        return createGraph3d(data, outputWrapper);
+    })();
+    r.setValueAsBoolean(NameInput.showPerspective, graph3d.showPerspective);
+    r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
     const calcRadius = (simpleData) => {
         const [sumX, sumY, sumZ] = simpleData.reduce((accum, sd) => {
             accum[0] += sd[0];
@@ -278,6 +275,20 @@ function calcDataSet(r, { c1, c2, type } = {}) {
         const midZ = sumZ / simpleData.length;
         return simpleData.reduce((radius, sd) => Math.max(radius, lengthV(sd[0] - midX, sd[1] - midY, sd[2] - midZ)), 0);
     };
+    function updateData() {
+        const { data, lyapunov, simpleData } = calcDataSet(r, { type: 'all' });
+        graph3d.setOptions({ style: calcRadius(simpleData) > 0.1 ? 'line' : 'dot' });
+        graph3d.setData(data);
+        r.getInput(NameInput.epsilon).previousElementSibling
+            .innerText = `Показатель Ляпунова: ${lyapunov.toString()}`;
+    }
+    function updatePerspective() {
+        graph3d.setOptions({ showPerspective: this.checked });
+    }
+    function updateNorma() {
+        r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
+        updateData();
+    }
     calcHotMap.addEventListener('click', (event) => {
         const arr = [];
         const chanks = [];

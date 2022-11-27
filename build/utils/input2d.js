@@ -9,7 +9,8 @@ export const addInput2D = (cursor, main, cb) => {
     cursor.style.position = 'absolute';
     cursor.style.zIndex = '1000';
     main.style.position = 'relative';
-    cursor.onmousedown = (baseEvent) => {
+    // eslint-disable-next-line no-multi-assign
+    main.onmousedown = cursor.onmousedown = (baseEvent) => {
         // переместим в body, чтобы мяч был точно не внутри position:relative
         // main.appendChild(cursor);
         // и установим абсолютно спозиционированный мяч под курсор
@@ -29,6 +30,7 @@ export const addInput2D = (cursor, main, cb) => {
         const onMouseMove = (event) => {
             moveAt(event.pageX - offsetLeft, event.pageY - offsetTop);
         };
+        onMouseMove(baseEvent);
         // (3) перемещать по экрану
         document.addEventListener('mousemove', onMouseMove);
         document.body.classList.add('off-user-select');

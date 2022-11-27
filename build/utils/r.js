@@ -6,12 +6,14 @@ export function createR(el) {
         addInput: (name, options) => {
             const span = document.createElement('span');
             span.innerHTML = options?.placeholder || name;
-            const placeholderId = options?.placeholderId;
-            if (placeholderId)
-                span.id = placeholderId;
             el.appendChild(span);
             const input = document.createElement('input');
             input.type = options?.type || 'number';
+            Object.entries(options?.dataset || {})
+                .forEach(([key, value]) => {
+                input.dataset[key] = value;
+                span.dataset[key] = value;
+            });
             const value = options?.value;
             input.placeholder = `${value}`;
             switch (typeof value) {

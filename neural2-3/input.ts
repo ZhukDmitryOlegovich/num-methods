@@ -1,3 +1,6 @@
+import { imports } from '@/utils/imports';
+import { parseHash } from '@/utils/parseHash';
+
 declare let vis: any;
 
 function createGraph3d(data: any, el: HTMLElement) {
@@ -24,10 +27,6 @@ function createGraph3d(data: any, el: HTMLElement) {
 	return new vis.Graph3d(el, data, options2);
 }
 
-const parseHash = () => window.location.hash.slice(1).split('#').map((e) => e.split(':'))
-	// eslint-disable-next-line no-return-assign, no-sequences
-	.reduce<Record<string, string>>((accum, [key, value]) => (accum[key] = value, accum), {});
-
 (() => {
 	const outputWrapper = document.getElementById('outputWrapper');
 
@@ -35,39 +34,43 @@ const parseHash = () => window.location.hash.slice(1).split('#').map((e) => e.sp
 		return;
 	}
 
-	const data = new vis.DataSet();
-	data.add({ x: 0, y: 0, z: 0 });
-	data.add({ x: 1, y: 1, z: 1 });
-
-	const graph3d = createGraph3d(data, outputWrapper);
+	const graph3d = (() => {
+		const data = new vis.DataSet();
+		data.add({ x: 0, y: 0, z: 0 });
+		data.add({ x: 1, y: 1, z: 1 });
+		return createGraph3d(data, outputWrapper);
+	})();
 
 	const calc = () => {
 		const {
-			k = '1', fromX = '-Infinity', max = 'Infinity', min = '-Infinity', 
+			k = '1', fromX = '-Infinity', max = 'Infinity', min = '-Infinity',
 			slice, grid = '1', pr, filename = '../../neural2-3/data.json', yCenter = graph3d.yCenter,
 			style = graph3d.style,
 		} = parseHash();
 
 		console.log({ k, fromX, pr });
 
-
-		import(filename, { assert: { type: "json" } }).then(({ default: bigData }: { default: [number, number, number][]; }) => {
+		imports(filename, { assert: { type: 'json' } }).then(({ default: bigData }: { default: [number, number, number][]; }) => {
 			const data = new vis.DataSet();
-			// @ts-ignore
 			console.log(bigData);
 
 			bigData.forEach(([x, y, z], i) => {
 				if ((+k === 1 || ((x * 10) % +k === 0 && (y * 10) % +k === 0)) && x >= +fromX) {
 					data.add({
-						x, y, z, style: Math.max(Math.min(z, +max), +min),
-						...(slice === undefined ? {} : { filter: +slice < z ? 'up' : 'down' })
+						x,
+						y,
+						z,
+						style: Math.max(Math.min(z, +max), +min),
+						...(slice === undefined ? {} : { filter: +slice < z ? 'up' : 'down' }),
 					});
 				}
 			});
 
 			console.log(data);
 			graph3d.setData(data);
-			graph3d.setOptions({ showPerspective: !!+pr, yCenter, showSurfaceGrid: !!+grid, style });
+			graph3d.setOptions({
+				showPerspective: !!+pr, yCenter, showSurfaceGrid: !!+grid, style,
+			});
 		});
 	};
 
