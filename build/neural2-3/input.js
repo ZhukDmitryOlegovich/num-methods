@@ -38,7 +38,7 @@ function createGraph3d(data, el) {
         return createGraph3d(data, outputWrapper);
     })();
     const calc = () => {
-        const { k = '1', fromX = '-Infinity', max = 'Infinity', min = '-Infinity', slice, grid = '0', pr, filename = '../neural2-3/data.json', yCenter = graph3d.yCenter, style = graph3d.style, } = parseHash();
+        const { k = '1', fromX = '-Infinity', max = 'Infinity', min = '-Infinity', slice, grid = '0', pr, filename = './data.json', yCenter = graph3d.yCenter, style = graph3d.style, } = parseHash();
         console.log({ k, fromX, pr });
         imports(filename).then((bigData) => {
             const data = new vis.DataSet();
