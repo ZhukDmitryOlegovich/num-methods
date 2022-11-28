@@ -67,6 +67,7 @@ export function createR(el: HTMLElement, parent?: any) {
 			return input;
 		},
 		getInput: (name: string) => allInput[name],
+		getSpan: (name: string) => allInput[name].previousElementSibling as HTMLSpanElement,
 		getValueAsNumber: (name: string) => replaceNaN(
 			allInput[name].valueAsNumber, +allInput[name].placeholder,
 		),

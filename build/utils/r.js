@@ -52,6 +52,7 @@ export function createR(el, parent) {
             return input;
         },
         getInput: (name) => allInput[name],
+        getSpan: (name) => allInput[name].previousElementSibling,
         getValueAsNumber: (name) => replaceNaN(allInput[name].valueAsNumber, +allInput[name].placeholder),
         getValueAsBoolean: (name) => allInput[name].checked,
         setValueAsBoolean: (name, value) => { allInput[name].checked = value; },

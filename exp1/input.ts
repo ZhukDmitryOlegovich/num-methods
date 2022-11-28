@@ -19,7 +19,9 @@ enum NameInput {
 	kNorma = 'kNorma',
 	start = 'start',
 	epsilon = 'epsilon',
-	recalc = 'recalc	',
+	recalc = 'recalc',
+	radius = 'radius',
+	lyapunov = 'lyapunov',
 }
 /* eslint-enable no-unused-vars, no-shadow */
 
@@ -106,7 +108,7 @@ const randomV = (): [number, number, number] => {
 	return [x / len, y / len, z / len];
 };
 
-function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 'lyapunov' | 'simpleData' | 'all'; } = {}) {
+function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 'lyapunov' | 'radius' | 'all'; } = {}) {
 	const data = new vis.DataSet();
 
 	const count = r.getValueAsNumber(NameInput.count);
@@ -125,6 +127,10 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	let eta = r.getValueAsNumber(NameInput.eta);
 	let theta = r.getValueAsNumber(NameInput.thetaMul) * Math.PI;
 
+	let sumX = 0;
+	let sumY = 0;
+	let sumZ = 0;
+
 	const [dxi, deta, dtheta] = randomV();
 
 	const epsilon = r.getValueAsNumber(NameInput.epsilon);
@@ -141,17 +147,22 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 		const sinTheta = Math.sin(theta);
 
 		if (index >= start) {
-			if (type === 'simpleData' || type === 'all') {
-				simpleData.push([
-					xi * sinTheta,
-					xi * cosTheta,
-					eta,
-				]);
+			const x = xi * sinTheta;
+			const y = xi * cosTheta;
+			const z = eta;
+
+			if (type === 'all' || type === 'radius') {
+				sumX += x;
+				sumY += y;
+				sumZ += z;
+
+				simpleData.push([x, y, z]);
 			}
+
 			data.add({
-				x: xi * sinTheta,
-				y: xi * cosTheta,
-				z: eta,
+				x,
+				y,
+				z,
 				xi,
 				theta,
 			});
@@ -189,7 +200,18 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 		}
 	}
 
-	return { data, lyapunov, simpleData };
+	const midX = sumX / simpleData.length;
+	const midY = sumY / simpleData.length;
+	const midZ = sumZ / simpleData.length;
+
+	const radius = (type === 'all' || type === 'radius') ? Math.sqrt(
+		simpleData.reduce(
+			(sum, sd) => sum + lengthV2(sd[0] - midX, sd[1] - midY, sd[2] - midZ),
+			0,
+		),
+	) : 0;
+
+	return { data, lyapunov, radius };
 }
 
 (() => {
@@ -222,7 +244,19 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	r2.addInput(NameInput.eta, { value: 0.5, placeholder: 'Коэффициент η' }).addEventListener('change', updateData);
 	r2.addInput(NameInput.thetaMul, { value: 1, placeholder: 'Коэффициент θ / π' }).addEventListener('change', updateData);
 	r.addHr();
-	r.addInput(NameInput.epsilon, { value: 0.001, placeholder: 'Показатель Ляпунова' }).addEventListener('change', updateData);
+	const b3 = r.createWrap({ className: 'row flex-fill' });
+	b3.addInput(NameInput.epsilon, { value: 0.001, placeholder: 'Эпсилон ε' }).addEventListener('change', updateData);
+	const r3 = b3.createWrap({ className: 'column flex-fill' });
+	r3.addInput(NameInput.lyapunov, { placeholder: 'П. Ляпунова: ' }).addEventListener('change', updateData);
+	const codeL = document.createElement('code');
+	codeL.className = 'number';
+	r3.getSpan(NameInput.lyapunov).appendChild(codeL);
+	r3.getInput(NameInput.lyapunov).style.display = 'none';
+	r3.addInput(NameInput.radius, { placeholder: 'Радиус: ' }).addEventListener('change', updateData);
+	const codeR = document.createElement('code');
+	codeR.className = 'number';
+	r3.getSpan(NameInput.radius).appendChild(codeR);
+	r3.getInput(NameInput.radius).style.display = 'none';
 	const wrapperButton = document.createElement('div');
 	wrapperButton.style.display = 'flex';
 	wrapperButton.style.flexDirection = 'row';
@@ -270,7 +304,6 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 		(r.getValueAsNumber(NameInput.c1) + 10) / 20,
 		(10 - r.getValueAsNumber(NameInput.c2)) / 20,
 	);
-	syncInput2D();
 	r.getInput(NameInput.c1).addEventListener('change', syncInput2D);
 	r.getInput(NameInput.c2).addEventListener('change', syncInput2D);
 
@@ -283,9 +316,9 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	});
 
 	const graph3d = (() => {
-		const { data, lyapunov } = calcDataSet(r);
-		(r.getInput(NameInput.epsilon).previousElementSibling as HTMLElement)
-			.innerText = `Показатель Ляпунова: ${lyapunov.toString()}`;
+		const { data, lyapunov, radius } = calcDataSet(r, { type: 'all' });
+		codeL.innerText = lyapunov.toExponential(2);
+		codeR.innerText = radius.toExponential(2);
 		return createGraph3d(data, outputWrapper);
 	})();
 
@@ -315,35 +348,17 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	if (+see) hideProps.click();
 	calcHotMap.disabled = !+calchot;
 
+	syncInput2D();
+
 	r.setValueAsBoolean(NameInput.showPerspective, graph3d.showPerspective);
 	r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
 
-	const calcRadius = (simpleData: [number, number, number][]) => {
-		const [sumX, sumY, sumZ] = simpleData.reduce((accum, sd) => {
-			accum[0] += sd[0];
-			accum[1] += sd[1];
-			accum[2] += sd[2];
-			return accum;
-		}, [0, 0, 0]);
-
-		const midX = sumX / simpleData.length;
-		const midY = sumY / simpleData.length;
-		const midZ = sumZ / simpleData.length;
-
-		return Math.sqrt(
-			simpleData.reduce(
-				(sum, sd) => sum + lengthV2(sd[0] - midX, sd[1] - midY, sd[2] - midZ),
-				0,
-			),
-		);
-	};
-
 	function updateData() {
-		const { data, lyapunov, simpleData } = calcDataSet(r, { type: 'all' });
-		graph3d.setOptions({ style: calcRadius(simpleData) > 0.1 ? 'line' : 'dot' });
+		const { data, lyapunov, radius } = calcDataSet(r, { type: 'all' });
+		graph3d.setOptions({ style: radius > 0.1 ? 'line' : 'dot' });
 		graph3d.setData(data);
-		(r.getInput(NameInput.epsilon).previousElementSibling as HTMLElement)
-			.innerText = `Показатель Ляпунова: ${lyapunov.toString()}`;
+		codeL.innerText = lyapunov.toExponential(2);
+		codeR.innerText = radius.toExponential(2);
 	}
 	function updatePerspective(this: HTMLInputElement) {
 		graph3d.setOptions({ showPerspective: this.checked });
@@ -371,11 +386,11 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 				chanks.push(
 					Promise.resolve().then(() => {
 						if (arr.length % 1000 === 0) console.log('arr', arr.length, c1, c2);
-						const { lyapunov, simpleData } = calcDataSet(r, { c1, c2, type: isRadius ? 'simpleData' : 'lyapunov' });
+						const { lyapunov, radius } = calcDataSet(r, { c1, c2, type: isRadius ? 'radius' : 'lyapunov' });
 						arr.push([
 							c1,
 							c2,
-							isRadius ? calcRadius(simpleData) : lyapunov,
+							isRadius ? radius : lyapunov,
 						]);
 					}),
 				);
