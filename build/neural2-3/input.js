@@ -40,7 +40,7 @@ function createGraph3d(data, el) {
     const calc = () => {
         const { k = '1', fromX = '-Infinity', max = 'Infinity', min = '-Infinity', slice, grid = '0', pr, filename = '../../neural2-3/data.json', yCenter = graph3d.yCenter, style = graph3d.style, } = parseHash();
         console.log({ k, fromX, pr });
-        imports(filename, { assert: { type: 'json' } }).then(({ default: bigData }) => {
+        imports(filename).then((bigData) => {
             const data = new vis.DataSet();
             console.log(bigData);
             bigData.forEach(([x, y, z], i) => {

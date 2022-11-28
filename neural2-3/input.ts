@@ -54,7 +54,7 @@ function createGraph3d(data: any, el: HTMLElement) {
 
 		console.log({ k, fromX, pr });
 
-		imports(filename, { assert: { type: 'json' } }).then(({ default: bigData }: { default: [number, number, number][]; }) => {
+		imports(filename).then((bigData) => {
 			const data = new vis.DataSet();
 			console.log(bigData);
 
