@@ -31,6 +31,7 @@ export function createR(el, parent) {
             div.appendChild(span);
             const input = document.createElement('input');
             input.type = options?.type || 'number';
+            input.step = options?.step?.toString() || input.step;
             addDataset(div, options?.dataset);
             const value = options?.value;
             input.placeholder = `${value}`;

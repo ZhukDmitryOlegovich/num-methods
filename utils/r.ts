@@ -3,6 +3,7 @@ export type TH<T extends 'number' | 'checkbox'> = {
 	value?:
 	| (T extends 'number' ? number : never)
 	| (T extends 'checkbox' ? boolean : never),
+	step?: number,
 };
 
 export type Other = {
@@ -46,6 +47,7 @@ export function createR(el: HTMLElement, parent?: any) {
 			div.appendChild(span);
 			const input = document.createElement('input');
 			input.type = options?.type || 'number';
+			input.step = options?.step?.toString() || input.step;
 			addDataset(div, options?.dataset);
 			const value = options?.value;
 			input.placeholder = `${value}`;

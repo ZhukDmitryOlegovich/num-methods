@@ -236,8 +236,8 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	r.addHr().className = 'hide';
 	const b2 = r.createWrap({ className: 'row flex-fill' });
 	const l2 = b2.createWrap({ className: 'column flex-fill transform' });
-	l2.addInput(NameInput.c1, { value: 7, placeholder: 'Коэффициент c<sub>1</sub>' }).addEventListener('change', updateData);
-	l2.addInput(NameInput.c2, { value: -6, placeholder: 'Коэффициент c<sub>2</sub>' }).addEventListener('change', updateData);
+	l2.addInput(NameInput.c1, { value: 7, placeholder: 'Коэффициент c<sub>1</sub>', step: 0.01 }).addEventListener('change', updateData);
+	l2.addInput(NameInput.c2, { value: -6, placeholder: 'Коэффициент c<sub>2</sub>', step: 0.01 }).addEventListener('change', updateData);
 	l2.addInput(NameInput.k, { value: 1, placeholder: 'Коэффициент k', className: 'hide column' }).addEventListener('change', updateData);
 	const r2 = b2.createWrap({ className: 'column flex-fill hide' });
 	r2.addInput(NameInput.xi, { value: 0.5, placeholder: 'Коэффициент ξ' }).addEventListener('change', updateData);
