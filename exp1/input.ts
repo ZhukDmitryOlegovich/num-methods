@@ -1,5 +1,6 @@
 import { addInput2D } from '@/utils/input2d';
 import { parseHash } from '@/utils/parseHash';
+import { addPath2D } from '@/utils/path2d';
 import { createR, R } from '@/utils/r';
 
 declare let vis: any;
@@ -192,7 +193,7 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 			const dtheta1 = theta - theta1;
 			const length1 = lengthV(dxi1, deta1, dtheta1);
 
-			lyapunov += Math.log(length1 / epsilon);
+			if (index >= start) lyapunov += Math.log(length1 / epsilon);
 
 			xi1 = xi + dxi1 / length1 * epsilon;
 			eta1 = eta + deta1 / length1 * epsilon;
@@ -227,7 +228,7 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	const b1 = r.createWrap({ className: 'row flex-fill hide' });
 	const l1 = b1.createWrap({ className: 'column flex-fill' });
 	l1.addInput(NameInput.count, { value: +parseHash().count || 1000, placeholder: 'Кол-во точек на графике' }).addEventListener('change', updateData);
-	l1.addInput(NameInput.start, { value: +parseHash().start || 500, placeholder: 'Начать с точки с индексом' }).addEventListener('change', updateData);
+	l1.addInput(NameInput.start, { value: +parseHash().start || 5000, placeholder: 'Начать с точки с индексом' }).addEventListener('change', updateData);
 	l1.addInput(NameInput.delta, { value: 0.02, placeholder: 'Шаг градиента' }).addEventListener('change', updateData);
 	const r1 = b1.createWrap({ className: 'column flex-fill' });
 	r1.addInput(NameInput.norma, { type: 'checkbox', value: false, placeholder: 'Нормализовывать градиент' }).addEventListener('change', updateNorma);
@@ -287,7 +288,8 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	cursor.style.borderRadius = '5px';
 	cursor.style.outline = '1px auto black';
 	main.appendChild(cursor);
-	const setInput2D = addInput2D(cursor, main, (x, y) => {
+
+	const setC1C2 = (x: number, y: number) => {
 		x = 20 * x - 10;
 		y = 10 - 20 * y;
 
@@ -298,7 +300,21 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 		if (needUpdate) {
 			updateData();
 		}
-	});
+	};
+
+	const setInput2D = addInput2D(cursor, main, setC1C2, ({ ctrlKey }) => ctrlKey);
+
+	const [path, clearPath] = addPath2D(main, () => {
+		const point = document.createElement('div');
+		point.style.backgroundColor = 'white';
+		point.style.width = '8px';
+		point.style.height = '8px';
+		point.style.borderRadius = '8px';
+		point.style.outline = '1px auto black';
+		point.style.position = 'absolute';
+		point.style.zIndex = '100';
+		return point;
+	}, console.log, ({ ctrlKey }) => !ctrlKey);
 	inputWrapper.appendChild(main);
 	const syncInput2D = () => setInput2D(
 		(r.getValueAsNumber(NameInput.c1) + 10) / 20,
@@ -307,18 +323,18 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	r.getInput(NameInput.c1).addEventListener('change', syncInput2D);
 	r.getInput(NameInput.c2).addEventListener('change', syncInput2D);
 
-	['0.1f', '0.1t', '0.3f', '0.05f', '0.01f', '0.001f', 'point'].forEach((e) => {
-		const changeHotMap = document.createElement('button');
-		changeHotMap.innerHTML = `🗺️${e}`;
-		changeHotMap.id = `hotmap${e}`;
-		changeHotMap.onclick = () => { main.style.backgroundImage = `url(./hotmap${e}.png)`; };
-		wrapperButton.appendChild(changeHotMap);
-	});
+	// ['0.1f', '0.1t', '0.3f', '0.05f', '0.01f', '0.001f', 'point'].forEach((e) => {
+	// 	const changeHotMap = document.createElement('button');
+	// 	changeHotMap.innerHTML = `🗺️${e}`;
+	// 	changeHotMap.id = `hotmap${e}`;
+	// 	changeHotMap.onclick = () => { main.style.backgroundImage = `url(./hotmap${e}.png)`; };
+	// 	wrapperButton.appendChild(changeHotMap);
+	// });
 
 	const graph3d = (() => {
 		const { data, lyapunov, radius } = calcDataSet(r, { type: 'all' });
 		codeL.innerText = lyapunov.toExponential(2);
-		codeR.innerText = radius.toExponential(2);
+		codeR.innerText = radius.toFixed(4);
 		return createGraph3d(data, outputWrapper);
 	})();
 
@@ -342,6 +358,68 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 		open = !open;
 	};
 	wrapperButton.appendChild(hideProps);
+	const clearPathB = document.createElement('button');
+	clearPathB.innerHTML = '🗑️';
+	clearPathB.onclick = () => {
+		clearPath(-1);
+	};
+	wrapperButton.appendChild(clearPathB);
+	const stAnim = document.createElement('button');
+	stAnim.innerHTML = '▶️';
+	{
+		const onclick = () => {
+			stAnim.innerHTML = '⏹️';
+
+			const p = path.map(([l]) => l);
+			const L = [0];
+			for (let i = 1; i < p.length; i++) {
+				L.push(
+					L.at(-1)!
+					+ Math.sqrt((p[i - 1][0] - p[i][0]) ** 2 + (p[i - 1][1] - p[i][1]) ** 2),
+				);
+			}
+
+			let t = 0;
+			let rotate = 1;
+			let d = Date.now();
+
+			const i = setInterval(() => {
+				const d1 = Date.now();
+				t += rotate * (d1 - d) / 1000 * (+parseHash().speed || 0.2);
+				d = d1;
+
+				if (t > L.at(-1)!) {
+					t = 2 * L.at(-1)! - t;
+					rotate *= -1;
+				}
+
+				if (t < 0) {
+					t = -t;
+					rotate *= -1;
+				}
+
+				let f = L.findIndex((v) => t < v);
+
+				if (f === -1) f = L.length - 1;
+
+				const pp = (t - L[f - 1]) / (L[f] - L[f - 1]);
+
+				setC1C2(
+					p[f - 1][0] + pp * (p[f][0] - p[f - 1][0]),
+					p[f - 1][1] + pp * (p[f][1] - p[f - 1][1]),
+				);
+				syncInput2D();
+			}, 10);
+
+			stAnim.onclick = () => {
+				stAnim.innerHTML = '▶️';
+				stAnim.onclick = onclick;
+				clearInterval(i);
+			};
+		};
+		stAnim.onclick = onclick;
+	}
+	wrapperButton.appendChild(stAnim);
 
 	const { hotmap, see, calchot } = parseHash();
 	if (hotmap) document.getElementById(`hotmap${hotmap}`)?.click();
@@ -358,7 +436,7 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 		graph3d.setOptions({ style: radius > 0.1 ? 'line' : 'dot' });
 		graph3d.setData(data);
 		codeL.innerText = lyapunov.toExponential(2);
-		codeR.innerText = radius.toExponential(2);
+		codeR.innerText = radius.toFixed(4);
 	}
 	function updatePerspective(this: HTMLInputElement) {
 		graph3d.setOptions({ showPerspective: this.checked });
@@ -372,17 +450,20 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 		const arr: any[] = [];
 		const chanks: Promise<void>[] = [];
 
-		const mul = 10;
+		const mul = +parseHash().mul || 10;
+		const fromC1 = +parseHash().fromC1 || -10;
+		const toC1 = +parseHash().toC1 || 10;
+		const fromC2 = +parseHash().fromC2 || -10;
+		const toC2 = +parseHash().toC2 || 10;
 		const isRadius = event.ctrlKey;
 
-		console.log({ isRadius });
+		console.log({ isRadius, mul });
 
 		console.time('calcHotMap');
-		for (let p1 = -10 * mul; p1 <= 10 * mul; p1++) {
-			for (let p2 = -10 * mul; p2 <= 10 * mul; p2++) {
+		for (let p1 = fromC1 * mul; p1 <= toC1 * mul; p1++) {
+			for (let p2 = fromC2 * mul; p2 <= toC2 * mul; p2++) {
 				const c1 = p1 / mul;
 				const c2 = p2 / mul;
-				if (chanks.length % 10000 === 0) console.log('chanks', chanks.length);
 				chanks.push(
 					Promise.resolve().then(() => {
 						if (arr.length % 1000 === 0) console.log('arr', arr.length, c1, c2);
@@ -396,6 +477,7 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 				);
 			}
 		}
+		console.log('chanks', chanks.length);
 		Promise.all(chanks).then(() => { console.log(arr); console.timeEnd('calcHotMap'); });
 
 		// graph3d.setOptions({ style: 'surface' });

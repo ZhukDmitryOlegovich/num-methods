@@ -10,6 +10,7 @@ export const addInput2D = (
 	cursor: HTMLElement,
 	main: HTMLElement,
 	cb: (x: number, y: number) => void,
+	skip?: (event: MouseEvent) => boolean,
 ) => {
 	// (2) подготовить к перемещению:
 	// разместить поверх остального содержимого и в абсолютных координатах
@@ -17,8 +18,8 @@ export const addInput2D = (
 	cursor.style.zIndex = '1000';
 	main.style.position = 'relative';
 
-	// eslint-disable-next-line no-multi-assign
-	main.onmousedown = cursor.onmousedown = (baseEvent: MouseEvent) => { // (1) отследить нажатие
+	const onmousedown = (baseEvent: MouseEvent) => { // (1) отследить нажатие
+		if (skip?.(baseEvent)) return;
 		// переместим в body, чтобы мяч был точно не внутри position:relative
 		// main.appendChild(cursor);
 		// и установим абсолютно спозиционированный мяч под курсор
@@ -62,6 +63,9 @@ export const addInput2D = (
 
 		cursor.ondragstart = () => false;
 	};
+
+	main.addEventListener('mousedown', onmousedown);
+	cursor.addEventListener('mousedown', onmousedown);
 
 	return (x: number, y: number) => {
 		const { offsetWidth, offsetHeight } = cursor;

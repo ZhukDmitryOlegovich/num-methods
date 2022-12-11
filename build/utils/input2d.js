@@ -3,14 +3,15 @@ const between = (value, min, max) => [
     (Math.min(Math.max(value, min), max) - min) / (max - min),
 ];
 // eslint-disable-next-line import/prefer-default-export
-export const addInput2D = (cursor, main, cb) => {
+export const addInput2D = (cursor, main, cb, skip) => {
     // (2) подготовить к перемещению:
     // разместить поверх остального содержимого и в абсолютных координатах
     cursor.style.position = 'absolute';
     cursor.style.zIndex = '1000';
     main.style.position = 'relative';
-    // eslint-disable-next-line no-multi-assign
-    main.onmousedown = cursor.onmousedown = (baseEvent) => {
+    const onmousedown = (baseEvent) => {
+        if (skip?.(baseEvent))
+            return;
         // переместим в body, чтобы мяч был точно не внутри position:relative
         // main.appendChild(cursor);
         // и установим абсолютно спозиционированный мяч под курсор
@@ -45,6 +46,8 @@ export const addInput2D = (cursor, main, cb) => {
         document.addEventListener('mouseleave', onmouseup);
         cursor.ondragstart = () => false;
     };
+    main.addEventListener('mousedown', onmousedown);
+    cursor.addEventListener('mousedown', onmousedown);
     return (x, y) => {
         const { offsetWidth, offsetHeight } = cursor;
         const { offsetWidth: mainOffsetWidth, offsetHeight: mainOffsetHeight, } = main;
