@@ -4,7 +4,6 @@ const between = (value, min, max) => [
 ];
 // https://stackoverflow.com/a/14560350
 export function linedraw(line, ax, ay, bx, by) {
-    console.log([ax, ay], '->', [bx, by]);
     if (ay > by) {
         bx = ax + bx;
         ax = bx - ax;

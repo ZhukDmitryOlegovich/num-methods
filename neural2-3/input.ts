@@ -47,7 +47,7 @@ function createGraph3d(data: any, el: HTMLElement) {
 
 	const calc = () => {
 		const {
-			k = '1', fromX = '-Infinity', max = 'Infinity', min = '-Infinity',
+			k = '0', kk = '0', nul = '30', fromX = '-Infinity', max = 'Infinity', min = '-Infinity',
 			slice, grid = '0', pr, filename = './data.json', yCenter = graph3d.yCenter,
 			style = graph3d.style,
 		} = parseHash();
@@ -59,11 +59,14 @@ function createGraph3d(data: any, el: HTMLElement) {
 			console.log(bigData);
 
 			bigData.forEach(([x, y, z], i) => {
-				if ((+k === 1 || ((x * 10) % +k === 0 && (y * 10) % +k === 0)) && x >= +fromX) {
+				if ((
+					+k <= 0
+					|| (x * 10 ** +kk % +k === 0 && y * 10 ** +kk % +k === 0)
+				) && x >= +fromX) {
 					data.add({
 						x,
 						y,
-						z,
+						z: z ?? +nul,
 						style: Math.max(Math.min(z, +max), +min),
 						...(slice === undefined ? {} : { filter: +slice < z ? 'up' : 'down' }),
 					});

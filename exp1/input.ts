@@ -5,6 +5,8 @@ import { createR, R } from '@/utils/r';
 
 declare let vis: any;
 
+// https://www.geogebra.org/graphing/d2nexq56
+
 /* eslint-disable no-unused-vars, no-shadow */
 enum NameInput {
 	count = 'count',
@@ -314,7 +316,7 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 		point.style.position = 'absolute';
 		point.style.zIndex = '100';
 		return point;
-	}, console.log, ({ ctrlKey }) => !ctrlKey);
+	}, () => console.log(path), ({ ctrlKey }) => !ctrlKey);
 	inputWrapper.appendChild(main);
 	const syncInput2D = () => setInput2D(
 		(r.getValueAsNumber(NameInput.c1) + 10) / 20,
@@ -421,6 +423,13 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	}
 	wrapperButton.appendChild(stAnim);
 
+	[0.01, 0.1, 1, 10, 100].forEach((x) => {
+		const step1 = document.createElement('button');
+		step1.innerHTML = `±${x}`;
+		step1.onclick = () => Object.values(r.allInput).forEach((e) => { e.step = x.toString(); });
+		wrapperButton.appendChild(step1);
+	});
+
 	const { hotmap, see, calchot } = parseHash();
 	if (hotmap) document.getElementById(`hotmap${hotmap}`)?.click();
 	if (+see) hideProps.click();
@@ -433,7 +442,7 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 
 	function updateData() {
 		const { data, lyapunov, radius } = calcDataSet(r, { type: 'all' });
-		graph3d.setOptions({ style: radius > 0.1 ? 'line' : 'dot' });
+		graph3d.setOptions({ style: radius <= 0.1 ? 'dot' : 'line' });
 		graph3d.setData(data);
 		codeL.innerText = lyapunov.toExponential(2);
 		codeR.innerText = radius.toFixed(4);
@@ -455,9 +464,11 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 		const toC1 = +parseHash().toC1 || 10;
 		const fromC2 = +parseHash().fromC2 || -10;
 		const toC2 = +parseHash().toC2 || 10;
-		const isRadius = event.ctrlKey;
+		const isRadius = !event.ctrlKey;
 
-		console.log({ isRadius, mul });
+		Object.entries({
+			isRadius, mul, fromC1, toC1, fromC2, toC2,
+		}).forEach(([k, v]) => console.log({ [k]: v }));
 
 		console.time('calcHotMap');
 		for (let p1 = fromC1 * mul; p1 <= toC1 * mul; p1++) {

@@ -22,6 +22,7 @@ const addDataset = (el: HTMLElement, dataset: Other['dataset']) => Object.entrie
 export function createR(el: HTMLElement, parent?: any) {
 	const allInput: Record<string, HTMLInputElement> = {};
 	const r = {
+		allInput,
 		origin: el,
 		registerInput: (name: string, input: HTMLInputElement) => {
 			allInput[name] = input;

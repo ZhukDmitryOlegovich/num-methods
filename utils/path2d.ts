@@ -9,7 +9,6 @@ const between = (
 export function linedraw(
 	line: HTMLElement, ax: number, ay: number, bx: number, by: number,
 ) {
-	console.log([ax, ay], '->', [bx, by]);
 	if (ay > by) {
 		bx = ax + bx;
 		ax = bx - ax;

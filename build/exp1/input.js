@@ -262,7 +262,7 @@ function calcDataSet(r, { c1, c2, type } = {}) {
         point.style.position = 'absolute';
         point.style.zIndex = '100';
         return point;
-    }, console.log, ({ ctrlKey }) => !ctrlKey);
+    }, () => console.log(path), ({ ctrlKey }) => !ctrlKey);
     inputWrapper.appendChild(main);
     const syncInput2D = () => setInput2D((r.getValueAsNumber(NameInput.c1) + 10) / 20, (10 - r.getValueAsNumber(NameInput.c2)) / 20);
     r.getInput(NameInput.c1).addEventListener('change', syncInput2D);
@@ -346,6 +346,12 @@ function calcDataSet(r, { c1, c2, type } = {}) {
         stAnim.onclick = onclick;
     }
     wrapperButton.appendChild(stAnim);
+    [0.01, 0.1, 1, 10, 100].forEach((x) => {
+        const step1 = document.createElement('button');
+        step1.innerHTML = `±${x}`;
+        step1.onclick = () => Object.values(r.allInput).forEach((e) => { e.step = x.toString(); });
+        wrapperButton.appendChild(step1);
+    });
     const { hotmap, see, calchot } = parseHash();
     if (hotmap)
         document.getElementById(`hotmap${hotmap}`)?.click();
@@ -357,7 +363,7 @@ function calcDataSet(r, { c1, c2, type } = {}) {
     r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
     function updateData() {
         const { data, lyapunov, radius } = calcDataSet(r, { type: 'all' });
-        graph3d.setOptions({ style: radius > 0.1 ? 'line' : 'dot' });
+        graph3d.setOptions({ style: radius <= 0.1 ? 'dot' : 'line' });
         graph3d.setData(data);
         codeL.innerText = lyapunov.toExponential(2);
         codeR.innerText = radius.toFixed(4);
@@ -377,8 +383,10 @@ function calcDataSet(r, { c1, c2, type } = {}) {
         const toC1 = +parseHash().toC1 || 10;
         const fromC2 = +parseHash().fromC2 || -10;
         const toC2 = +parseHash().toC2 || 10;
-        const isRadius = event.ctrlKey;
-        console.log({ isRadius, mul });
+        const isRadius = !event.ctrlKey;
+        Object.entries({
+            isRadius, mul, fromC1, toC1, fromC2, toC2,
+        }).forEach(([k, v]) => console.log({ [k]: v }));
         console.time('calcHotMap');
         for (let p1 = fromC1 * mul; p1 <= toC1 * mul; p1++) {
             for (let p2 = fromC2 * mul; p2 <= toC2 * mul; p2++) {

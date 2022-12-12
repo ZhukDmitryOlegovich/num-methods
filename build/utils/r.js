@@ -6,6 +6,7 @@ const addDataset = (el, dataset) => Object.entries(dataset || {})
 export function createR(el, parent) {
     const allInput = {};
     const r = {
+        allInput,
         origin: el,
         registerInput: (name, input) => {
             allInput[name] = input;
