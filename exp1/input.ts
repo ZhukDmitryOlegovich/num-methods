@@ -207,12 +207,11 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	const midY = sumY / simpleData.length;
 	const midZ = sumZ / simpleData.length;
 
-	const radius = (type === 'all' || type === 'radius') ? Math.sqrt(
-		simpleData.reduce(
-			(sum, sd) => sum + lengthV2(sd[0] - midX, sd[1] - midY, sd[2] - midZ),
+	const radius = (type === 'all' || type === 'radius')
+		? simpleData.reduce(
+			(sum, sd) => sum + lengthV(sd[0] - midX, sd[1] - midY, sd[2] - midZ),
 			0,
-		),
-	) : 0;
+		) / simpleData.length : 0;
 
 	return { data, lyapunov, radius };
 }
@@ -336,7 +335,7 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 	const graph3d = (() => {
 		const { data, lyapunov, radius } = calcDataSet(r, { type: 'all' });
 		codeL.innerText = lyapunov.toExponential(2);
-		codeR.innerText = radius.toFixed(4);
+		codeR.innerText = radius.toExponential(2);
 		return createGraph3d(data, outputWrapper);
 	})();
 
@@ -442,10 +441,10 @@ function calcDataSet(r: R, { c1, c2, type }: { c1?: number, c2?: number; type?: 
 
 	function updateData() {
 		const { data, lyapunov, radius } = calcDataSet(r, { type: 'all' });
-		graph3d.setOptions({ style: radius <= 0.1 ? 'dot' : 'line' });
+		graph3d.setOptions({ style: radius <= 1e-3 ? 'dot' : 'line' });
 		graph3d.setData(data);
 		codeL.innerText = lyapunov.toExponential(2);
-		codeR.innerText = radius.toFixed(4);
+		codeR.innerText = radius.toExponential(2);
 	}
 	function updatePerspective(this: HTMLInputElement) {
 		graph3d.setOptions({ showPerspective: this.checked });

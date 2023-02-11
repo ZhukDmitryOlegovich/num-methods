@@ -2,6 +2,7 @@ import { addInput2D } from '../utils/input2d.js';
 import { parseHash } from '../utils/parseHash.js';
 import { addPath2D } from '../utils/path2d.js';
 import { createR } from '../utils/r.js';
+// https://www.geogebra.org/graphing/d2nexq56
 /* eslint-disable no-unused-vars, no-shadow */
 var NameInput;
 (function (NameInput) {
@@ -168,7 +169,8 @@ function calcDataSet(r, { c1, c2, type } = {}) {
     const midX = sumX / simpleData.length;
     const midY = sumY / simpleData.length;
     const midZ = sumZ / simpleData.length;
-    const radius = (type === 'all' || type === 'radius') ? Math.sqrt(simpleData.reduce((sum, sd) => sum + lengthV2(sd[0] - midX, sd[1] - midY, sd[2] - midZ), 0)) : 0;
+    const radius = (type === 'all' || type === 'radius')
+        ? simpleData.reduce((sum, sd) => sum + lengthV(sd[0] - midX, sd[1] - midY, sd[2] - midZ), 0) / simpleData.length : 0;
     return { data, lyapunov, radius };
 }
 (() => {
@@ -277,7 +279,7 @@ function calcDataSet(r, { c1, c2, type } = {}) {
     const graph3d = (() => {
         const { data, lyapunov, radius } = calcDataSet(r, { type: 'all' });
         codeL.innerText = lyapunov.toExponential(2);
-        codeR.innerText = radius.toFixed(4);
+        codeR.innerText = radius.toExponential(2);
         return createGraph3d(data, outputWrapper);
     })();
     const hideProps = document.createElement('button');
@@ -363,10 +365,10 @@ function calcDataSet(r, { c1, c2, type } = {}) {
     r.getInput(NameInput.kNorma).disabled = !r.getInput(NameInput.norma).checked;
     function updateData() {
         const { data, lyapunov, radius } = calcDataSet(r, { type: 'all' });
-        graph3d.setOptions({ style: radius <= 0.1 ? 'dot' : 'line' });
+        graph3d.setOptions({ style: radius <= 1e-3 ? 'dot' : 'line' });
         graph3d.setData(data);
         codeL.innerText = lyapunov.toExponential(2);
-        codeR.innerText = radius.toFixed(4);
+        codeR.innerText = radius.toExponential(2);
     }
     function updatePerspective() {
         graph3d.setOptions({ showPerspective: this.checked });
