@@ -148,11 +148,11 @@ import { InputType, solveGalileo, solveGalileoHeight, solveRungeKutta, solveRung
 					v0: v0g,
 				};
 
-				(datas[1][0] ??= []).push([alpfa, solveGalileo(input)]);
-				(datas[1][1] ??= []).push([alpfa, solveRungeKutta(input)]);
+				(datas[1][0] ??= []).push([alpfa / Math.PI * 180, solveGalileo(input)]);
+				(datas[1][1] ??= []).push([alpfa / Math.PI * 180, solveRungeKutta(input)]);
 
-				(datas2[1][0] ??= []).push([alpfa, solveGalileoHeight(input)]);
-				(datas2[1][1] ??= []).push([alpfa, solveRungeKuttaHeight(input)]);
+				(datas2[1][0] ??= []).push([alpfa / Math.PI * 180, solveGalileoHeight(input)]);
+				(datas2[1][1] ??= []).push([alpfa / Math.PI * 180, solveRungeKuttaHeight(input)]);
 			}
 
 		}

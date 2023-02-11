@@ -115,10 +115,10 @@ import { solveGalileo, solveGalileoHeight, solveRungeKutta, solveRungeKuttaHeigh
                     s,
                     v0: v0g,
                 };
-                ((_e = datas[1])[0] ?? (_e[0] = [])).push([alpfa, solveGalileo(input)]);
-                ((_f = datas[1])[1] ?? (_f[1] = [])).push([alpfa, solveRungeKutta(input)]);
-                ((_g = datas2[1])[0] ?? (_g[0] = [])).push([alpfa, solveGalileoHeight(input)]);
-                ((_h = datas2[1])[1] ?? (_h[1] = [])).push([alpfa, solveRungeKuttaHeight(input)]);
+                ((_e = datas[1])[0] ?? (_e[0] = [])).push([alpfa / Math.PI * 180, solveGalileo(input)]);
+                ((_f = datas[1])[1] ?? (_f[1] = [])).push([alpfa / Math.PI * 180, solveRungeKutta(input)]);
+                ((_g = datas2[1])[0] ?? (_g[0] = [])).push([alpfa / Math.PI * 180, solveGalileoHeight(input)]);
+                ((_h = datas2[1])[1] ?? (_h[1] = [])).push([alpfa / Math.PI * 180, solveRungeKuttaHeight(input)]);
             }
         }
         p.innerText = ((Date.now() - startFrom) / 1000).toPrecision(3);
