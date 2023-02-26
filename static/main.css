@@ -11,8 +11,8 @@ body {
 	padding: 10px;
 	height: 100vh;
 	display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
+	flex-direction: column;
+	box-sizing: border-box;
 }
 
 sub {
@@ -128,11 +128,19 @@ code {
 }
 
 .table {
-	display: flex; 
+	display: flex;
 	flex-direction: row;
 }
 
 .table > * {
 	display: flex;
 	flex-direction: column;
+}
+
+p {
+	margin: 0;
+}
+
+.line {
+	stroke-width: 2px;
 }

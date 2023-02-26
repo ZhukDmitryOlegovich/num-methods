@@ -43,7 +43,7 @@ class MyPainterState extends State<MyPainter> {
               onChanged: (text) {
                 var myDouble = double.tryParse(text);
                 if (myDouble is! double) return;
-                
+
                 if (j == 3) {
                   v3[i] = myDouble;
                 } else {

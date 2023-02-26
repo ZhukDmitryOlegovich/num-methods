@@ -36,7 +36,9 @@
         "no-param-reassign": "off",
         "no-restricted-syntax": "off",
         "max-classes-per-file": "off",
-        "no-use-before-define": ["error", {
+        "no-use-before-define": "off",
+        "@typescript-eslint/no-use-before-define": ["error", {
+            "variables": false,
             "functions": false
         }],
         "max-len": [

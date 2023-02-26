@@ -42,8 +42,8 @@ import { fromLength } from '../math/utils.js';
 2 5 8
 3 6 9
 
-14 
-32 
+14
+32
 51`;
     textarea.style.width = '100%';
     textarea.style.height = '130px';

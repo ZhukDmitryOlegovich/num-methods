@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Лаб №2 | Жук. Моделирование</title>
+	<link rel="shortcut icon" href="../static/favicon.png">
+	<link rel="stylesheet" href="../static/reset.css">
+	<link rel="stylesheet" href="../static/main.css">
+</head>
+
+<body style="height: auto;">
+	<div style="display: flex; align-items: center; gap: 4px;">
+		<a href="https://github.com/ZhukDmitryOlegovich/num-methods/tree/main/sim-lab2">Ссылка на исходники</a>
+		<script>document.body.style.zoom = 1</script>
+		<button onclick="document.body.style.zoom -= -0.1">zoom +</button>
+		<button onclick="document.body.style.zoom -= 0.1">zoom -</button>
+		<div style="flex-grow: 1;"></div>
+		<button onclick="location.href='../lab1'">lab 1</button>
+		<button onclick="location.href='../lab2'">lab 2</button>
+	</div>
+	<h2>Лабораторная работа №2
+		<!-- <br>«Итеративный алгоритм построения триангуляции Делоне» -->
+	</h2>
+	<!--
+		Цель исследования:
+	-->
+
+	<script type="module" src="../build/math/index.js"></script>
+	<script src="../static/function-plot.js"></script>
+
+	<style>
+		input {
+			width: 75px;
+		}
+	</style>
+
+	<div id="lab2-input" style="display: flex;flex-direction: column;align-items: baseline;"></div>
+	<div style="display: flex; flex-direction: row;">
+		<div id="lab2-plot"></div>
+	</div>
+
+	<script type="module" src="../build/sim-lab2/input.js"></script>
+</body>
+
+</html>

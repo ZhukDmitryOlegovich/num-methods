@@ -1,5 +1,5 @@
 /* import functionPlot from 'function-plot'; */
-import { solveGalileo, solveGalileoHeight, solveRungeKutta, solveRungeKuttaHeight } from './util.js';
+import { solveGalileo, solveGalileoHeight, solveRungeKutta, solveRungeKuttaHeight, } from './util.js';
 (() => {
     const node = document.getElementById('lab1-input');
     const plot = document.getElementById('lab1-plot');
@@ -82,8 +82,6 @@ import { solveGalileo, solveGalileoHeight, solveRungeKutta, solveRungeKuttaHeigh
         const ag = inputAg.valueAsNumber / 180 * Math.PI;
         const datas = [[], []];
         const datas2 = [[], []];
-        let minY = Infinity;
-        let maxY = -Infinity;
         const end = 100;
         for (let N = 0; N <= end; N++) {
             {
@@ -138,15 +136,15 @@ import { solveGalileo, solveGalileoHeight, solveRungeKutta, solveRungeKuttaHeigh
             ...options,
             xAxis: {
                 domain: [
-                    Math.min(...datas[0].flatMap((p) => p.map((pp) => pp[0]))),
-                    Math.max(...datas[0].flatMap((p) => p.map((pp) => pp[0]))),
+                    Math.min(...datas[0].flatMap((p_) => p_.map((pp_) => pp_[0]))),
+                    Math.max(...datas[0].flatMap((p_) => p_.map((pp_) => pp_[0]))),
                 ],
                 label: 'скорость',
             },
             yAxis: {
                 domain: [
-                    Math.min(...datas[0].flatMap((p) => p.map((pp) => pp[1]))),
-                    Math.max(...datas[0].flatMap((p) => p.map((pp) => pp[1]))),
+                    Math.min(...datas[0].flatMap((p_) => p_.map((pp_) => pp_[1]))),
+                    Math.max(...datas[0].flatMap((p_) => p_.map((pp_) => pp_[1]))),
                 ],
                 label: 'дальность',
             },
@@ -161,15 +159,15 @@ import { solveGalileo, solveGalileoHeight, solveRungeKutta, solveRungeKuttaHeigh
             ...options,
             xAxis: {
                 domain: [
-                    Math.min(...datas[1].flatMap((p) => p.map((pp) => pp[0]))),
-                    Math.max(...datas[1].flatMap((p) => p.map((pp) => pp[0]))),
+                    Math.min(...datas[1].flatMap((p_) => p_.map((pp_) => pp_[0]))),
+                    Math.max(...datas[1].flatMap((p_) => p_.map((pp_) => pp_[0]))),
                 ],
                 label: 'угол',
             },
             yAxis: {
                 domain: [
-                    Math.min(...datas[1].flatMap((p) => p.map((pp) => pp[1]))),
-                    Math.max(...datas[1].flatMap((p) => p.map((pp) => pp[1]))),
+                    Math.min(...datas[1].flatMap((p_) => p_.map((pp_) => pp_[1]))),
+                    Math.max(...datas[1].flatMap((p_) => p_.map((pp_) => pp_[1]))),
                 ],
                 label: 'дальность',
             },
@@ -184,15 +182,15 @@ import { solveGalileo, solveGalileoHeight, solveRungeKutta, solveRungeKuttaHeigh
             ...options,
             xAxis: {
                 domain: [
-                    Math.min(...datas2[0].flatMap((p) => p.map((pp) => pp[0]))),
-                    Math.max(...datas2[0].flatMap((p) => p.map((pp) => pp[0]))),
+                    Math.min(...datas2[0].flatMap((p_) => p_.map((pp_) => pp_[0]))),
+                    Math.max(...datas2[0].flatMap((p_) => p_.map((pp_) => pp_[0]))),
                 ],
                 label: 'скорость',
             },
             yAxis: {
                 domain: [
-                    Math.min(...datas2[0].flatMap((p) => p.map((pp) => pp[1]))),
-                    Math.max(...datas2[0].flatMap((p) => p.map((pp) => pp[1]))),
+                    Math.min(...datas2[0].flatMap((p_) => p_.map((pp_) => pp_[1]))),
+                    Math.max(...datas2[0].flatMap((p_) => p_.map((pp_) => pp_[1]))),
                 ],
                 label: 'высота',
             },
@@ -207,15 +205,15 @@ import { solveGalileo, solveGalileoHeight, solveRungeKutta, solveRungeKuttaHeigh
             ...options,
             xAxis: {
                 domain: [
-                    Math.min(...datas2[1].flatMap((p) => p.map((pp) => pp[0]))),
-                    Math.max(...datas2[1].flatMap((p) => p.map((pp) => pp[0]))),
+                    Math.min(...datas2[1].flatMap((p_) => p_.map((pp_) => pp_[0]))),
+                    Math.max(...datas2[1].flatMap((p_) => p_.map((pp_) => pp_[0]))),
                 ],
                 label: 'угол',
             },
             yAxis: {
                 domain: [
-                    Math.min(...datas2[1].flatMap((p) => p.map((pp) => pp[1]))),
-                    Math.max(...datas2[1].flatMap((p) => p.map((pp) => pp[1]))),
+                    Math.min(...datas2[1].flatMap((p_) => p_.map((pp_) => pp_[1]))),
+                    Math.max(...datas2[1].flatMap((p_) => p_.map((pp_) => pp_[1]))),
                 ],
                 label: 'высота',
             },

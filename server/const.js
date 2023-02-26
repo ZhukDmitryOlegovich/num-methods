@@ -17,7 +17,7 @@ const build = path.resolve(
 const rootDir = path.resolve(root, compilerOptions.rootDir || '.');
 // const paths = Object.entries(compilerOptions.paths || {}).map(
 // 	/**
-// 	 * @param {[string, [string]]} param0 
+// 	 * @param {[string, [string]]} param0
 // 	 * @returns {[RegExp, string]}
 // 	 */
 // 	([reg, [rep]]) => [

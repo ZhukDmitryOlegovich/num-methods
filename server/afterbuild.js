@@ -17,7 +17,7 @@ let countFail = 0;
 
 files.then(
 	/**
-	 * @param {string[]} filePaths 
+	 * @param {string[]} filePaths
 	 */
 	(filePaths) => Promise.all(filePaths.map((filepath) => new Promise(
 		(resolve) => fs.readFile(filepath, 'utf8', (err, data) => {
@@ -31,10 +31,10 @@ files.then(
 			let newData = data.replace(
 				/((?:import|export) .* from\s+['"])(.*)(['"];?)/g,
 				/**
-				 * @param {string} full 
-				 * @param {string} type 
-				 * @param {string} name 
-				 * @param {string} final 
+				 * @param {string} full
+				 * @param {string} type
+				 * @param {string} name
+				 * @param {string} final
 				 */
 				(full, type, name, final) => {
 					name = name.replace(/(\.js){2,}/, '$1');
