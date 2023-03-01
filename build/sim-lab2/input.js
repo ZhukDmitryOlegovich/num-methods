@@ -1,5 +1,5 @@
 /* import functionPlot from 'function-plot'; */
-import { initDelaunay, randomBetween } from './util.js';
+import { initDelaunay, randomBetween, } from './util.js';
 (() => {
     const node = document.getElementById('lab2-input');
     const plot = document.getElementById('lab2-plot');
@@ -18,6 +18,21 @@ import { initDelaunay, randomBetween } from './util.js';
     const button2 = document.createElement('button');
     button2.innerText = 'Дальше';
     div2.appendChild(button2);
+    const button3 = document.createElement('button');
+    button3.innerText = 'Автоклик';
+    div2.appendChild(button3);
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.valueAsNumber = 10;
+    div2.appendChild(input);
+    // eslint-disable-next-line no-multi-assign
+    const restart = button3.onclick = () => {
+        const id = setInterval(() => button2.click(), input.valueAsNumber);
+        button3.onclick = () => {
+            clearInterval(id);
+            button3.onclick = restart;
+        };
+    };
     node.appendChild(div2);
     const p = document.createElement('p');
     div2.appendChild(p);
@@ -28,40 +43,109 @@ import { initDelaunay, randomBetween } from './util.js';
         };
         button2.addEventListener('click', callback);
     });
-    initDelaunay({
-        fromX,
-        fromY,
-        toX,
-        toY,
-        async getPoint() {
-            return { x: randomBetween(fromX, toX), y: randomBetween(fromY, toY) };
-        },
-        async nextStep() {
-            await waitClick();
-            return true;
-        },
-    });
-    const points = [
-        [randomBetween(fromX, toX), randomBetween(fromY, toY)],
-        [randomBetween(fromX, toX), randomBetween(fromY, toY)],
-        [randomBetween(fromX, toX), randomBetween(fromY, toY)],
-    ];
-    points.push([...points[0]]);
+    const colorNew = 'darkgreen';
+    const colorNormal = 'blue';
+    const colorRemove = 'purple';
+    const colorFail = 'red';
+    const pointsPrint = [];
+    const newPoint = {
+        points: [],
+        fnType: 'points',
+        graphType: 'scatter',
+        color: colorNew,
+    };
     const options = {
         grid: false,
         xAxis: { domain: [fromX, toX] },
         yAxis: { domain: [fromY, toY] },
         target: plot,
         data: [{
-                // @ts-ignore
-                closed: 'sudo',
-                points,
+                points: pointsPrint,
                 fnType: 'points',
-                graphType: 'polyline',
-                color: 'rgba(255, 0, 0, 1)',
-            }],
+                graphType: 'scatter',
+                color: colorNormal,
+            }, newPoint],
         width: 820,
         height: 800,
     };
+    const removeAll = () => {
+        options.data = options.data.filter(({ color }) => color !== colorRemove);
+    };
+    const normalizeNew = () => {
+        options.data.forEach((dat) => {
+            if (dat.color === colorNew) {
+                dat.color = colorNormal;
+            }
+        });
+        pointsPrint.push(...newPoint.points);
+        newPoint.points.length = 0;
+    };
+    initDelaunay({
+        fromX,
+        fromY,
+        toX,
+        toY,
+        async getPoint() {
+            if (Math.random() > 0.8) {
+                const x = randomBetween(fromX, toX);
+                const y = Math.min(Math.max(4 * (x - 0.5) ** 2 + Math.random() * 0.1 - 0.05, fromY), toY);
+                return { x, y };
+            }
+            const x = randomBetween(fromX, toX);
+            const y = randomBetween(fromY, toY);
+            return { x, y };
+        },
+        async nextStep() {
+            // await waitClick();
+            p.innerText = String((Number(p.innerText) || 0) + 1);
+            return true;
+        },
+        async addPoint(point) {
+            removeAll();
+            newPoint.points.push([point.x, point.y]);
+            functionPlot(options);
+            await waitClick();
+        },
+        async removePoint() {
+            throw new Error('remowe point');
+        },
+        async createTriangle(triangle) {
+            removeAll();
+            options.data.push({
+                closed: 'sudo',
+                points: triangle.points.map(({ x, y }) => [x, y]),
+                fnType: 'points',
+                graphType: 'polyline',
+                color: colorNew,
+                triangle,
+            });
+            functionPlot(options);
+            await waitClick();
+        },
+        async removeTriangle(triangle) {
+            normalizeNew();
+            options.data.some((dat) => {
+                if (dat.triangle === triangle) {
+                    dat.color = colorRemove;
+                    return true;
+                }
+                return false;
+            });
+            functionPlot(options);
+            await waitClick();
+        },
+        async getIncorrectTriangles(triangles) {
+            normalizeNew();
+            removeAll();
+            options.data.forEach((dat) => {
+                const { triangle } = dat;
+                if (triangle && triangles.includes(triangle)) {
+                    dat.color = colorFail;
+                }
+            });
+            functionPlot(options);
+            await waitClick();
+        },
+    });
     functionPlot(options);
 })();

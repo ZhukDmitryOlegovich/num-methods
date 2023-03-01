@@ -144,3 +144,7 @@ p {
 .line {
 	stroke-width: 2px;
 }
+
+circle {
+	stroke-width: 5px;
+}

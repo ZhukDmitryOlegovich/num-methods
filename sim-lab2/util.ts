@@ -13,27 +13,6 @@ export type Triangle = {
 	points: readonly [Point, Point, Point];
 };
 
-// @ts-ignore
-const test: <T>(value: T) => value is Exclude<T, null | undefined | false | 0 | ''> = Boolean;
-
-const getNeighborTriangles = (t: Triangle) => {
-	const [p1, p2, p3] = t.points;
-	return [
-		findOtherTriangle(p1, p2, t),
-		findOtherTriangle(p2, p3, t),
-		findOtherTriangle(p3, p1, t),
-	].filter(test);
-};
-
-const getNeighborTrianglesPoints = (t: Triangle) => {
-	const [p1, p2, p3] = t.points;
-	return [
-		getThirdPointFromOtherTriangle(p1, p2, t),
-		getThirdPointFromOtherTriangle(p2, p3, t),
-		getThirdPointFromOtherTriangle(p3, p1, t),
-	].filter(test);
-};
-
 const findOtherTriangle = (
 	p1: Point, p2: Point, t: Triangle,
 ) => {
@@ -50,23 +29,6 @@ const getThirdPoint = <T extends Triangle | null | undefined>(
 	return t.points[2] as any;
 };
 
-const getThirdPointFromOtherTriangle = (
-	p1: Point, p2: Point, t: Triangle,
-) => getThirdPoint(p1, p2, findOtherTriangle(p1, p2, t));
-
-const isNeighborTriangles = (t1: Triangle, t2: Triangle): [Point, Point] | null => {
-	const set = new Set(t1.points);
-	const [q1, q2, q3] = t2.points;
-
-	if (set.has(q1)) {
-		if (set.has(q2)) return [q1, q2];
-
-		return set.has(q3) ? [q1, q3] : null;
-	}
-
-	return set.has(q2) && set.has(q3) ? [q2, q3] : null;
-};
-
 export type Config = {
 	fromX: number;
 	fromY: number;
@@ -74,7 +36,7 @@ export type Config = {
 	toY: number;
 	nextStep(): Promise<boolean>;
 	getPoint(): Promise<SimplePoint>;
-	addPoint?: (p: SimplePoint) => Promise<void>;
+	addPoint?: (p: Point) => Promise<void>;
 	removePoint?: (p: Point) => Promise<void>;
 	createTriangle?: (t: Triangle) => Promise<void>;
 	removeTriangle?: (t: Triangle) => Promise<void>;
@@ -87,7 +49,7 @@ type Data = {
 	addPoint(p: SimplePoint): Promise<Point>;
 	createTriangle(p1: Point, p2: Point, p3: Point): Promise<Triangle>;
 	removeTriangle(t: Triangle): Promise<void>;
-	getIncorrectTriangles(): Promise<Triangle[]>;
+	getIncorrectTriangles(newPoint: Point): Promise<Triangle[]>;
 };
 
 export const randomBetween = (from: number, to: number) => Math.random() * (to - from) + from;
@@ -117,16 +79,63 @@ const triangleIncludePoint = (t: Triangle, p0: SimplePoint) => {
 	return 'out' as const;
 };
 
+const det3 = (a: number[][]) => 0
+	+ a[0][0] * a[1][1] * a[2][2]
+	+ a[0][1] * a[1][2] * a[2][0]
+	+ a[0][2] * a[1][0] * a[2][1]
+	- a[0][2] * a[1][1] * a[2][0]
+	- a[0][1] * a[1][0] * a[2][2]
+	- a[0][0] * a[1][2] * a[2][1];
+
 const checkDelaunay = (t: Triangle, p0: Point): boolean => {
+	const [p1, p2, p3] = t.points;
+	const x0 = p0.x;
+	const y0 = p0.y;
+	const x1 = p1.x;
+	const y1 = p1.y;
+	const x2 = p2.x;
+	const y2 = p2.y;
+	const x3 = p3.x;
+	const y3 = p3.y;
+
+	const s1 = x1 ** 2 + y1 ** 2;
+	const s2 = x2 ** 2 + y2 ** 2;
+	const s3 = x3 ** 2 + y3 ** 2;
+
+	const a = det3([
+		[x1, y1, 1],
+		[x2, y2, 1],
+		[x3, y3, 1],
+	]);
+	const b = det3([
+		[s1, y1, 1],
+		[s2, y2, 1],
+		[s3, y3, 1],
+	]);
+	const c = det3([
+		[s1, x1, 1],
+		[s2, x2, 1],
+		[s3, x3, 1],
+	]);
+	const d = det3([
+		[s1, x1, y1],
+		[s2, x2, y2],
+		[s3, x3, y3],
+	]);
+
+	return Math.sign(a) * (a * (x0 ** 2 + y0 ** 2) - b * x0 + c * y0 - d) >= 0;
+};
+
+const checkDelaunay2 = (t: Triangle, p0: Point): boolean => {
 	const [p1, p2, p3] = t.points;
 	const sa = (p0.x - p1.x) * (p0.x - p3.x) + (p0.y - p1.y) * (p0.y - p3.y);
 	const sb = (p2.x - p1.x) * (p2.x - p3.x) + (p2.y - p1.y) * (p2.y - p3.y);
 
-	if (sa < 0 && sb < 0) return false;
-	if (sa >= 0 && sb >= 0) return true;
+	// if (sa < 0 && sb < 0) return false;
+	// if (sa >= 0 && sb >= 0) return true;
 
-	return ((p0.x - p1.x) * (p0.y - p3.y) - (p0.x - p3.x) * (p0.y - p1.y)) * sb
-		+ ((p2.x - p1.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p2.y - p1.y)) * sa >= 0;
+	return Math.abs((p0.x - p1.x) * (p0.y - p3.y) - (p0.x - p3.x) * (p0.y - p1.y)) * sb
+		+ Math.abs((p2.x - p1.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p2.y - p1.y)) * sa >= 0;
 };
 
 export const initDelaunay = async (config: Config) => {
@@ -137,14 +146,13 @@ export const initDelaunay = async (config: Config) => {
 
 	const allPoints = new Set<Point>();
 	const allTriangles = new Set<Triangle>();
-	const trianglesFromLastCheck = new Set<Triangle>();
 
 	const data: Data = {
 		triangles: allTriangles,
 		async addPoint(p) {
 			const newPoint: Point = { ...p, triangles: new Set() };
 			allPoints.add(newPoint);
-			await config.addPoint?.(p);
+			await config.addPoint?.(newPoint);
 			return newPoint;
 		},
 		async removePoint(p) {
@@ -159,7 +167,6 @@ export const initDelaunay = async (config: Config) => {
 		async createTriangle(...points) {
 			const triangle: Triangle = { points };
 			allTriangles.add(triangle);
-			trianglesFromLastCheck.add(triangle);
 			points.forEach((point) => point.triangles.add(triangle));
 			await createTriangle?.(triangle);
 			return triangle;
@@ -174,23 +181,12 @@ export const initDelaunay = async (config: Config) => {
 			if (!allTriangles.delete(triangle)) {
 				throw new Error('triangle not include in all triangles');
 			}
-			trianglesFromLastCheck.delete(triangle);
 		},
-		async getIncorrectTriangles() {
-			Array.from(trianglesFromLastCheck).forEach((triangle) => {
-				getNeighborTriangles(triangle).forEach(
-					(neighborTriangle) => trianglesFromLastCheck.add(neighborTriangle),
-				);
-			});
-
-			const triangles = Array.from(trianglesFromLastCheck).filter(
-				(triangle) => getNeighborTrianglesPoints(triangle).some(
-					(point) => !checkDelaunay(triangle, point),
-				),
-			);
+		async getIncorrectTriangles(point) {
+			const triangles = Array.from(data.triangles)
+				.filter((triangle) => !checkDelaunay(triangle, point));
 
 			await getIncorrectTriangles?.(triangles);
-			trianglesFromLastCheck.clear();
 			return triangles;
 		},
 	};
@@ -225,123 +221,86 @@ const iterativeDelaunay = async (data: Data, newPoint: Point) => {
 	 * >> Либо, если точка не попадает внутрь триангуляции, находится треугольник на границе триангуляции, ближайший к очередной точке.
 	 * >> но этого не будет
 	 */
-	let lastType: ReturnType<typeof triangleIncludePoint> = 'out' as ReturnType<typeof triangleIncludePoint>;
-	const triangle = Array.from(data.triangles).find((t) => {
-		lastType = triangleIncludePoint(t, newPoint);
-		return lastType !== 'out';
-	})!;
+	// let lastType: ReturnType<typeof triangleIncludePoint> = 'out' as ReturnType<typeof triangleIncludePoint>;
+	// const triangle = Array.from(data.triangles).find((t) => {
+	// 	lastType = triangleIncludePoint(t, newPoint);
+	// 	return lastType !== 'out';
+	// })!;
 
 	/**
 	 * Шаг 4.
 	 */
-	switch (lastType) {
-		/**
-		 * - Если точка попала на ранее вставленный узел триангуляции, то такая точка обычно отбрасывается,
-		 * иначе точка вставляется в триангуляцию в виде нового узла.
-		 */
-		case 'v1': case 'v2': case 'v3':
-			await data.removePoint(newPoint);
-			break;
-		/**
-		 * - При этом если точка попала на некоторое ребро, то оно разбивается на два новых,
-		 * а оба смежных с ребром треугольника также делятся на два меньших.
-		 */
-		case 'v1-v2': case 'v1-v3': case 'v2-v3': {
-			const i1 = (lastType[1] as any) - 1;
-			const i2 = (lastType[4] as any) - 1;
-			const pi1 = triangle.points[i1];
-			const pi2 = triangle.points[i2];
-			const pOur = triangle.points[0 + 1 + 2 - i1 - i2];
-			const otherTriangle = findOtherTriangle(pi1, pi2, triangle);
+	// switch (lastType) {
+	// 	/**
+	// 	 * - Если точка попала на ранее вставленный узел триангуляции, то такая точка обычно отбрасывается,
+	// 	 * иначе точка вставляется в триангуляцию в виде нового узла.
+	// 	 */
+	// 	case 'v1': case 'v2': case 'v3':
+	// 		await data.removePoint(newPoint);
+	// 		break;
+	// 	/**
+	// 	 * - При этом если точка попала на некоторое ребро, то оно разбивается на два новых,
+	// 	 * а оба смежных с ребром треугольника также делятся на два меньших.
+	// 	 */
+	// 	case 'v1-v2': case 'v1-v3': case 'v2-v3': {
+	// 		const i1 = (lastType[1] as any) - 1;
+	// 		const i2 = (lastType[4] as any) - 1;
+	// 		const pi1 = triangle.points[i1];
+	// 		const pi2 = triangle.points[i2];
+	// 		const pOur = triangle.points[0 + 1 + 2 - i1 - i2];
+	// 		const otherTriangle = findOtherTriangle(pi1, pi2, triangle);
 
-			if (!otherTriangle) {
-				throw new Error('incorrect type, not found otherTriangle');
-			}
+	// 		if (!otherTriangle) {
+	// 			throw new Error('incorrect type, not found otherTriangle');
+	// 		}
 
-			await data.removeTriangle(triangle);
-			await data.removeTriangle(otherTriangle);
+	// 		await data.removeTriangle(triangle);
+	// 		await data.removeTriangle(otherTriangle);
 
-			const pOther = getThirdPoint(pi1, pi2, otherTriangle);
+	// 		const pOther = getThirdPoint(pi1, pi2, otherTriangle);
 
-			await data.createTriangle(pi1, pOur, newPoint);
-			await data.createTriangle(pi2, pOur, newPoint);
-			await data.createTriangle(pi1, pOther, newPoint);
-			await data.createTriangle(pi2, pOther, newPoint);
+	// 		await data.createTriangle(pi1, pOur, newPoint);
+	// 		await data.createTriangle(pi2, pOur, newPoint);
+	// 		await data.createTriangle(pi1, pOther, newPoint);
+	// 		await data.createTriangle(pi2, pOther, newPoint);
 
-			break;
-		}
-		/**
-		 * - Если точка попала строго внутрь какого-нибудь треугольника, он разбивается на три новых.
-		 */
-		case 'in': {
-			await data.removeTriangle(triangle);
+	// 		break;
+	// 	}
+	// 	/**
+	// 	 * - Если точка попала строго внутрь какого-нибудь треугольника, он разбивается на три новых.
+	// 	 */
+	// 	case 'in': {
+	// 		await data.removeTriangle(triangle);
 
-			const [p1, p2, p3] = triangle.points;
+	// 		const [p1, p2, p3] = triangle.points;
 
-			await data.createTriangle(p1, p2, newPoint);
-			await data.createTriangle(p2, p3, newPoint);
-			await data.createTriangle(p3, p1, newPoint);
+	// 		await data.createTriangle(p1, p2, newPoint);
+	// 		await data.createTriangle(p2, p3, newPoint);
+	// 		await data.createTriangle(p3, p1, newPoint);
 
-			break;
-		}
-		/**
-		 * >> - Если точка попала вне триангуляции, то строится один или более треугольников.
-		 * >> но этого не будет
-		 */
-		case 'out': default: throw new Error(`incorrect lastType ${JSON.stringify(lastType)}`);
-	}
+	// 		break;
+	// 	}
+	// 	/**
+	// 	 * >> - Если точка попала вне триангуляции, то строится один или более треугольников.
+	// 	 * >> но этого не будет
+	// 	 */
+	// 	case 'out': default: throw new Error(`incorrect lastType ${JSON.stringify(lastType)}`);
+	// }
 
 	/**
 	 * Шаг 5. Проводятся локальные проверки вновь полученных треугольников на соответствие условию Делоне
 	 * и выполняются необходимые перестроения.
-	 * >> (pdf, страница 10, теорема 1)
 	 */
 
-	let incorrectTriangles = await data.getIncorrectTriangles();
-	const incorrectTrianglesSet = new Set(incorrectTriangles);
-	/* eslint-disable no-await-in-loop, no-labels */
-	while (incorrectTriangles.length) {
-		let update = false;
+	const incorrectTriangles = await data.getIncorrectTriangles(newPoint);
+	await Promise.all(incorrectTriangles.map(data.removeTriangle));
 
-		flag: for (let i = 0; i < incorrectTriangles.length; i++) {
-			for (let j = i + 1; j < incorrectTriangles.length; j++) {
-				const t1 = incorrectTriangles[i];
-				const t2 = incorrectTriangles[j];
-				const ans = isNeighborTriangles(t1, t2);
+	const grad = (p: Point) => Math.atan2(p.y - newPoint.y, p.x - newPoint.x);
 
-				if (ans) {
-					await data.removeTriangle(t1);
-					await data.removeTriangle(t2);
+	const lostPoints = [...new Set(incorrectTriangles.flatMap(({ points }) => points))]
+		.sort((a, b) => grad(a) - grad(b));
 
-					incorrectTriangles[i] = incorrectTriangles[incorrectTriangles.length - 1];
-					incorrectTriangles.length--;
-					incorrectTriangles[j] = incorrectTriangles[incorrectTriangles.length - 1];
-					incorrectTriangles.length--;
-
-					incorrectTrianglesSet.delete(t1);
-					incorrectTrianglesSet.delete(t2);
-
-					const [p1, p3] = ans;
-					const p2 = getThirdPoint(p1, p3, t1);
-					const p4 = getThirdPoint(p1, p3, t2);
-
-					await data.createTriangle(p1, p2, p4);
-					await data.createTriangle(p3, p2, p4);
-
-					update = true;
-
-					break flag;
-				}
-			}
-		}
-
-		if (!update) {
-			throw new Error(`fail in incorrectTriangles, length = ${incorrectTriangles.length}, size = ${incorrectTrianglesSet.size}`);
-		}
-
-		const newTriangles = await data.getIncorrectTriangles();
-		newTriangles.forEach((incorrectTriangle) => incorrectTrianglesSet.add(incorrectTriangle));
-		incorrectTriangles = Array.from(newTriangles);
-	}
-	/* eslint-enable no-await-in-loop, no-labels */
+	await Promise.all(lostPoints.map(
+		(p, i) => data.createTriangle(p, lostPoints[(i + 1) % lostPoints.length], newPoint),
+	));
 };
