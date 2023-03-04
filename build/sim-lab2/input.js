@@ -11,6 +11,7 @@ import { initDelaunay, randomBetween, } from './util.js';
     div2.style.display = 'flex';
     div2.style.flexDirection = 'row';
     div2.style.alignItems = 'baseline';
+    div2.className = 'line circle';
     const fromX = 0;
     const fromY = 0;
     const toX = 1;
@@ -21,9 +22,16 @@ import { initDelaunay, randomBetween, } from './util.js';
     const button3 = document.createElement('button');
     button3.innerText = 'Автоклик';
     div2.appendChild(button3);
+    let skeepRender = false;
+    const button4 = document.createElement('button');
+    button4.innerText = 'Рендер';
+    div2.appendChild(button4);
+    button4.onclick = () => {
+        skeepRender = !skeepRender;
+    };
     const input = document.createElement('input');
     input.type = 'number';
-    input.valueAsNumber = 10;
+    input.valueAsNumber = 0;
     div2.appendChild(input);
     // eslint-disable-next-line no-multi-assign
     const restart = button3.onclick = () => {
@@ -75,36 +83,42 @@ import { initDelaunay, randomBetween, } from './util.js';
         options.data.forEach((dat) => {
             if (dat.color === colorNew) {
                 dat.color = colorNormal;
+                // dat.color = `#${Math.round(Math.random() * 256 ** 3).toString(16).padStart(6, '0')}`;
             }
         });
         pointsPrint.push(...newPoint.points);
         newPoint.points.length = 0;
     };
+    let skeepWait = true;
+    let countPoint = 0;
     initDelaunay({
         fromX,
         fromY,
         toX,
         toY,
         async getPoint() {
-            if (Math.random() > 0.8) {
-                const x = randomBetween(fromX, toX);
-                const y = Math.min(Math.max(4 * (x - 0.5) ** 2 + Math.random() * 0.1 - 0.05, fromY), toY);
-                return { x, y };
-            }
+            skeepWait = false;
             const x = randomBetween(fromX, toX);
             const y = randomBetween(fromY, toY);
             return { x, y };
         },
         async nextStep() {
             // await waitClick();
-            p.innerText = String((Number(p.innerText) || 0) + 1);
+            if (!skeepRender || countPoint % 100 === 0) {
+                p.innerText = countPoint.toString();
+            }
             return true;
         },
         async addPoint(point) {
             removeAll();
+            countPoint++;
             newPoint.points.push([point.x, point.y]);
-            functionPlot(options);
-            await waitClick();
+            if (!skeepRender) {
+                functionPlot(options);
+            }
+            if (!skeepWait) {
+                await waitClick();
+            }
         },
         async removePoint() {
             throw new Error('remowe point');
@@ -119,8 +133,8 @@ import { initDelaunay, randomBetween, } from './util.js';
                 color: colorNew,
                 triangle,
             });
-            functionPlot(options);
-            await waitClick();
+            // functionPlot(options);
+            // await waitClick();
         },
         async removeTriangle(triangle) {
             normalizeNew();
@@ -131,8 +145,8 @@ import { initDelaunay, randomBetween, } from './util.js';
                 }
                 return false;
             });
-            functionPlot(options);
-            await waitClick();
+            // functionPlot(options);
+            // await waitClick();
         },
         async getIncorrectTriangles(triangles) {
             normalizeNew();
@@ -143,8 +157,12 @@ import { initDelaunay, randomBetween, } from './util.js';
                     dat.color = colorFail;
                 }
             });
-            functionPlot(options);
-            await waitClick();
+            if (!skeepRender) {
+                functionPlot(options);
+            }
+            if (!skeepWait) {
+                await waitClick();
+            }
         },
     });
     functionPlot(options);

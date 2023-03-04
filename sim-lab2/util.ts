@@ -216,85 +216,20 @@ export const initDelaunay = async (config: Config) => {
 
 const iterativeDelaunay = async (data: Data, newPoint: Point) => {
 	/**
-	 * Шаг 3. Очередная n-я точка добавляется в уже построенную структуру триангуляции следующим образом.
-	 * Вначале производится локализация точки, т.е. находится треугольник (построенный ранее), в который попадает очередная точка.
-	 * >> Либо, если точка не попадает внутрь триангуляции, находится треугольник на границе триангуляции, ближайший к очередной точке.
-	 * >> но этого не будет
+	 * В итеративном алгоритме «Удаляй и строй» не выполняется никаких перестроений.
 	 */
-	// let lastType: ReturnType<typeof triangleIncludePoint> = 'out' as ReturnType<typeof triangleIncludePoint>;
-	// const triangle = Array.from(data.triangles).find((t) => {
-	// 	lastType = triangleIncludePoint(t, newPoint);
-	// 	return lastType !== 'out';
-	// })!;
-
 	/**
-	 * Шаг 4.
+	 * Вместо этого при каждой вставке нового узла сразу же удаляются все треугольники,
+	 * у которых внутрь описанных окружностей попадает новый узел.
+	 * При этом все удаленные треугольники неявно образуют некоторый многоугольник.
 	 */
-	// switch (lastType) {
-	// 	/**
-	// 	 * - Если точка попала на ранее вставленный узел триангуляции, то такая точка обычно отбрасывается,
-	// 	 * иначе точка вставляется в триангуляцию в виде нового узла.
-	// 	 */
-	// 	case 'v1': case 'v2': case 'v3':
-	// 		await data.removePoint(newPoint);
-	// 		break;
-	// 	/**
-	// 	 * - При этом если точка попала на некоторое ребро, то оно разбивается на два новых,
-	// 	 * а оба смежных с ребром треугольника также делятся на два меньших.
-	// 	 */
-	// 	case 'v1-v2': case 'v1-v3': case 'v2-v3': {
-	// 		const i1 = (lastType[1] as any) - 1;
-	// 		const i2 = (lastType[4] as any) - 1;
-	// 		const pi1 = triangle.points[i1];
-	// 		const pi2 = triangle.points[i2];
-	// 		const pOur = triangle.points[0 + 1 + 2 - i1 - i2];
-	// 		const otherTriangle = findOtherTriangle(pi1, pi2, triangle);
-
-	// 		if (!otherTriangle) {
-	// 			throw new Error('incorrect type, not found otherTriangle');
-	// 		}
-
-	// 		await data.removeTriangle(triangle);
-	// 		await data.removeTriangle(otherTriangle);
-
-	// 		const pOther = getThirdPoint(pi1, pi2, otherTriangle);
-
-	// 		await data.createTriangle(pi1, pOur, newPoint);
-	// 		await data.createTriangle(pi2, pOur, newPoint);
-	// 		await data.createTriangle(pi1, pOther, newPoint);
-	// 		await data.createTriangle(pi2, pOther, newPoint);
-
-	// 		break;
-	// 	}
-	// 	/**
-	// 	 * - Если точка попала строго внутрь какого-нибудь треугольника, он разбивается на три новых.
-	// 	 */
-	// 	case 'in': {
-	// 		await data.removeTriangle(triangle);
-
-	// 		const [p1, p2, p3] = triangle.points;
-
-	// 		await data.createTriangle(p1, p2, newPoint);
-	// 		await data.createTriangle(p2, p3, newPoint);
-	// 		await data.createTriangle(p3, p1, newPoint);
-
-	// 		break;
-	// 	}
-	// 	/**
-	// 	 * >> - Если точка попала вне триангуляции, то строится один или более треугольников.
-	// 	 * >> но этого не будет
-	// 	 */
-	// 	case 'out': default: throw new Error(`incorrect lastType ${JSON.stringify(lastType)}`);
-	// }
-
-	/**
-	 * Шаг 5. Проводятся локальные проверки вновь полученных треугольников на соответствие условию Делоне
-	 * и выполняются необходимые перестроения.
-	 */
-
 	const incorrectTriangles = await data.getIncorrectTriangles(newPoint);
 	await Promise.all(incorrectTriangles.map(data.removeTriangle));
 
+	/**
+	 * После этого на месте удаленных треугольников строится заполняющая триангуляция
+	 * путем соединения нового узла с этим многоугольником.
+	 */
 	const grad = (p: Point) => Math.atan2(p.y - newPoint.y, p.x - newPoint.x);
 
 	const lostPoints = [...new Set(incorrectTriangles.flatMap(({ points }) => points))]
