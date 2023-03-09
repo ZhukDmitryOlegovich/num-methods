@@ -40,7 +40,7 @@ import { solveMishen } from './util';
 
 	node.appendChild(div2);
 
-	const p = document.createElement('p');
+	const p = document.createElement('code');
 	div2.appendChild(p);
 
 	button2.onclick = () => {

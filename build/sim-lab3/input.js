@@ -27,7 +27,7 @@ import { solveMishen } from './util.js';
     inputCount.valueAsNumber = 100;
     div2.appendChild(inputCount);
     node.appendChild(div2);
-    const p = document.createElement('p');
+    const p = document.createElement('code');
     div2.appendChild(p);
     button2.onclick = () => {
         const { prevValues, value } = solveMishen({
