@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Лабораторная работа №2-3 | Жук. Нейронные сети</title>
+	<link rel="shortcut icon" href="../static/favicon.png">
+	<link rel="stylesheet" href="../static/reset.css">
+	<link rel="stylesheet" href="../static/main.css">
+</head>
+
+<body>
+	<div style="display: flex; align-items: center; gap: 4px;">
+		<a href="https://github.com/ZhukDmitryOlegovich/num-methods/tree/main/neural2-3">Ссылка на исходники</a>
+		<script>document.body.style.zoom = 1.0</script>
+		<button onclick="document.body.style.zoom -= -0.1">zoom +</button>
+		<button onclick="document.body.style.zoom -= 0.1">zoom -</button>
+		<div style="flex-grow: 1;"></div>
+		<button onclick="location.href='../sim-lab1'">sim-lab 1</button>
+		<button onclick="location.href='../sim-lab2'">sim-lab 2</button>
+		<button onclick="location.href='../sim-lab3'">sim-lab 3</button>
+		<button onclick="location.href='../sim-lab4'">sim-lab 4</button>
+		<button onclick="location.hash=`#index:0#qvartile:${+!!location.hash.match('#qvartile:1')}`" style="background-color: gray;">#index:0</button>
+		<button onclick="location.hash=`#index:1#qvartile:${+!!location.hash.match('#qvartile:1')}`" style="background-color: gray;">#index:1</button>
+		<button onclick="location.hash=`#index:2#qvartile:${+!!location.hash.match('#qvartile:1')}`" style="background-color: gray;">#index:2</button>
+		<button onclick="location.hash = location.hash.match('#qvartile:1') ? location.hash.replace('#qvartile:1', '#qvartile:0') : location.hash.replace('#qvartile:0', '')+'#qvartile:1'" style="background-color: gray;">#qvartile</button>
+	</div>
+	<h2>Лабораторная работа №4</h2>
+
+	<!-- Чтобы полностью перейти на локальную разработку -->
+	<!-- <script type="text/javascript" src="https://unpkg.com/vis-graph3d@latest/dist/vis-graph3d.min.js"></script> -->
+	<script type="text/javascript" src="../static/vis-graph3d.min.js"></script>
+
+	<style>
+		input[type="number"] {
+			width: 75px;
+		}
+	</style>
+
+	<div class="table flex-fill">
+		<div style="width: 100%;">
+			<code id="text" style="position: absolute; font-size: 1.5em; z-index: 1;"></code>
+			<div id="outputWrapper" class="flex-fill"></div>
+		</div>
+	</div>
+
+	<script type="module" src="../build/sim-lab4/input.js"></script>
+</body>
+
+</html>
