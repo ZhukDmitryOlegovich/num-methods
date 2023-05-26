@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+	<meta charset="utf-8" />
+	<title>Изучение №1 | Жук</title>
+	<link rel="shortcut icon" href="../../static/favicon.png">
+	<link rel="stylesheet" href="../../static/reset.css">
+	<link rel="stylesheet" href="../../static/main.css">
+</head>
+
+<body style="height: auto;">
+	<div style="display: flex; align-items: center; gap: 4px;">
+		<a href="https://github.com/ZhukDmitryOlegovich/num-methods/tree/main/exp2/step1">Ссылка на исходники</a>
+		<script>document.body.style.zoom = 1.1</script>
+		<button onclick="document.body.style.zoom -= -0.1">zoom +</button>
+		<button onclick="document.body.style.zoom -= 0.1">zoom -</button>
+		<div style="flex-grow: 1;"></div>
+		<button onclick="location.href='../../step1'">step1</button>
+	</div>
+	<h2>Изучение №1</h2>
+
+	<script type="module" src="../../build/math/index.js"></script>
+	<script src="https://unpkg.com/function-plot/dist/function-plot.js"></script>
+
+	<style>
+		input {
+			width: 75px;
+		}
+	</style>
+
+	<div id="step1-input" style="display: flex;flex-direction: column;align-items: baseline;"></div>
+	<div style="display: flex; flex-direction: column;">
+		<div id="step1-plot" class="resizable" style="width: 100%; height: 380px;"></div>
+		<!-- <div id="step1-plot2" class="resizable" style="width: 100%; height: 380px;"></div> -->
+	</div>
+
+	<script type="module" src="../../build/exp2/step1/input.js"></script>
+</body>
+
+</html>
