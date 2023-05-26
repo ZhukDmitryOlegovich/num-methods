@@ -148,3 +148,8 @@ line, .line {
 circle, .circle {
 	stroke-width: 4px;
 }
+
+.resizable {
+	resize: both;
+	overflow: hidden;
+}
