@@ -1,6 +1,6 @@
 import { sum } from './sum.js';
 export class ONN {
-    constructor(K, f) {
+    constructor(K, f, initPhi) {
         this.K = K;
         this.f = f;
         this.N = f.length;
@@ -10,7 +10,7 @@ export class ONN {
         ].every((size) => size === this.N)) {
             throw new RangeError('incorrect size');
         }
-        this.phi = [...f];
+        this.phi = initPhi || [...f];
         this.dphi = [...f];
     }
     step(t) {

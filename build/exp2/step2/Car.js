@@ -49,7 +49,7 @@ export class Vector extends Point {
         return new Vector(this.x, this.y);
     }
 }
-const between = (value, { min, max }) => Math.max(min, Math.min(max, value));
+const between = (value, max) => Math.max(-max, Math.min(max, value));
 export class Car {
     get angle() {
         return __classPrivateFieldGet(this, _Car_angle, "f");
@@ -63,7 +63,43 @@ export class Car {
         _Car_angle.set(this, 0);
         this.direction = null; // Направление
         this.turn = null; // Поворот
+        this.initPosition = new Point(x, y);
         this.position = new Point(x, y);
+        if (this.options.angle) {
+            this.angle = this.options.angle;
+        }
+        this.initAngle = this.angle;
+    }
+    $reset() {
+        this.position = this.initPosition.clone();
+        this.angle = this.initAngle;
+        this.speed = 0;
+    }
+    getDirection() {
+        switch (this.direction) {
+            case 'back':
+                return -1;
+            case 'forward':
+                return 1;
+            case 'stop':
+                return -Math.sign(this.speed);
+            case null:
+                return 0;
+            default:
+                return this.direction;
+        }
+    }
+    getTurn() {
+        switch (this.turn) {
+            case 'left':
+                return -1;
+            case 'right':
+                return 1;
+            case null:
+                return 0;
+            default:
+                return this.turn;
+        }
     }
     $step(t) {
         // Сопротивление
@@ -72,12 +108,14 @@ export class Car {
         this.speed = (Math.abs(s - r) - Math.abs(s + r)) / 2 + s; // чтобы не колебатся в нуле
         // Направление
         if (this.direction) {
-            const sign = this.direction === 'stop' ? -Math.sign(this.speed) : this.direction === 'forward' ? 1 : -1;
-            this.speed = between(this.speed + sign * this.options.dspeed * t, this.options.speed);
+            this.speed = between(this.speed + this.getDirection() * this.options.dspeed * t, this.options.maxSpeed);
         }
         // Поворот
         if (this.turn) {
-            this.angle += Math.sign(this.speed) * Math.abs(this.speed / this.options.speed.max) ** 0.5 * (this.turn === 'right' ? 1 : -1) * this.options.turn * t;
+            this.angle += Math.sign(this.speed)
+                * Math.abs(this.speed / this.options.maxSpeed) ** 0.5
+                * this.getTurn()
+                * this.options.turn * t;
         }
         // Позиция
         this.position.$move(Vector.Polar(this.speed * t, this.angle));

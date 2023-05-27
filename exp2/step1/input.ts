@@ -12,9 +12,9 @@ import { rAF } from '../rAF';
 (() => {
 	const node = document.getElementById('step1-input');
 	const plot = document.getElementById('step1-plot');
-	// const plot2 = document.getElementById('step1-plot2');
+	const plot2 = document.getElementById('step1-plot2');
 
-	if (!node || !plot) {
+	if (!node || !plot || !plot2) {
 		console.error('fail not found');
 		return;
 	}
@@ -30,8 +30,16 @@ import { rAF } from '../rAF';
 	const inputT = document.createElement('input');
 	inputT.type = 'number';
 	inputT.placeholder = 't';
-	inputT.valueAsNumber = 0.004;
+	inputT.valueAsNumber = 0.001;
 	div.appendChild(inputT);
+
+	div.appendChild(document.createTextNode('\xa0| from (start)\xa0'));
+
+	const inputFrom = document.createElement('input');
+	inputFrom.type = 'number';
+	inputFrom.placeholder = 'from';
+	inputFrom.valueAsNumber = 0;
+	div.appendChild(inputFrom);
 
 	div.appendChild(document.createTextNode('\xa0| to (end)\xa0'));
 
@@ -57,134 +65,128 @@ import { rAF } from '../rAF';
 
 	button2.onclick = () => {
 		const startFrom = Date.now();
-
+		const initPhi = Array.from({ length: 10 }).map((_, i, arr) => Math.random() * 2 * Math.PI);
 		const t = inputT.valueAsNumber;
 		const to = inputTo.valueAsNumber;
+		const from = inputFrom.valueAsNumber;
 
-		const bigData: [number, number][][] = [];
+		const filterByTime = (data: [number, number][][]) => data.map(
+			(minidata) => minidata.filter(([time]) => from <= time && time <= to),
+		);
 
-		const f: Arr10 = [21, 14, 10, 15, 20, 25, 12.5, 17.5, 17.5, 22.5];
+		const [a, b] = [plot, plot2].map((thisPlot, ii) => {
+			const bigData: [number, number][][] = [];
 
-		// const getA = (h: number) => {
-		// 	if (h === 0 || h === 1) {
-		// 		return 4;
-		// 	}
-		// 	return 1;
-		// };
-		// const K = fromLength(10, (i) => fromLength(10, (j) => {
-		// 	const kij = (() => {
-		// 		if ((i === 0)
-		// 			|| (i === 1) || (i === j)) {
-		// 			return 0;
-		// 		}
-		// 		return 1;
-		// 	})();
-		// 	return getA(i) * getA(j) * kij;
-		// })) as M2;
+			const f: Arr10 = [21, 14, 10, 15, 20, 25, 12.5, 17.5, ii === 1 ? 40 : 17.5, 22.5];
 
-		const e: Arr10 = [4, 4, 1, 1, 1, 1, 1, 1, 1, 1];
-		const K = fromLength(10, (i) => fromLength(10, (j) => e[i] * e[j])) as M2;
+			const e: Arr10 = [4, 4, 1, 1, 1, 1, 1, 1, 1, 1];
+			const K = fromLength(10, (i) => fromLength(10, (j) => e[i] * e[j])) as M2;
+			const onn = new ONN(K, f, initPhi);
+			console.log({ K, f });
 
-		const onn = new ONN(K, f);
-		console.log({ K, f });
+			const saveDate = (now: number) => {
+				onn.dphi.forEach((dphi, i) => {
+					(bigData[i] ??= []).push([now, dphi / (2 * Math.PI)]);
+				});
+			};
 
-		const saveDate = (now: number) => {
-			onn.dphi.forEach((dphi, i) => {
-				(bigData[i] ??= []).push([now, dphi]);
-			});
-		};
-
-		let now = 0;
-		saveDate(now);
-		for (let i = 0; now <= to; i += 1, now = t * i) {
-			onn.step(t);
+			let now = 0;
 			saveDate(now);
-		}
+			for (let i = 0; now <= to; i += 1, now = t * i) {
+				onn.step(t);
+				saveDate(now);
+			}
 
-		p.innerText = ((Date.now() - startFrom) / 1000).toPrecision(3);
-		console.log({ bigData });
+			console.log({ bigData });
 
-		const options: Omit<FunctionPlotOptions, 'target' | 'data'> = {
-			// xAxis: {
-			// 	// domain: [from, to],
-			// },
-			// yAxis: {
-			// 	// type: 'log',
-			// 	domain: [minY, maxY],
-			// },
-			grid: true,
-		};
-
-		const graphType = parseHash().g ? 'scatter' : 'polyline';
-
-		const createPlot = (
-			data: [number, number][][], target: HTMLElement, size: typeof size1,
-		) => {
-			const syncSizePrev = (contentRect: DOMRectReadOnly) => {
-				size.height = Math.round(contentRect.height) - 20;
-				size.width = Math.round(contentRect.width) - 20;
+			const options: Omit<FunctionPlotOptions, 'target' | 'data'> = {
+				// xAxis: {
+				// 	// domain: [from, to],
+				// },
+				// yAxis: {
+				// 	// type: 'log',
+				// 	domain: [minY, maxY],
+				// },
+				grid: true,
 			};
-			syncSizePrev(target.getBoundingClientRect());
 
-			const bigOptions: FunctionPlotOptions & { target: HTMLElement; } = {
-				...options,
-				...size,
-				xAxis: {
-					domain: [
-						Math.min(...data.flatMap((p_) => p_.map((pp_) => pp_[0]))),
-						Math.max(...data.flatMap((p_) => p_.map((pp_) => pp_[0]))),
-					],
-					label: 'Время',
-				},
-				yAxis: {
-					domain: [
-						Math.min(...data.flatMap((p_) => p_.map((pp_) => pp_[1]))),
-						Math.max(...data.flatMap((p_) => p_.map((pp_) => pp_[1]))),
-					],
-					label: 'Частота',
-				},
-				target,
-				tip: {
-					xLine: true,
-					yLine: true,
-					renderer(x, y, index) {
-						const args = { x, y, index };
-						console.log({ args });
-						return JSON.stringify(args);
+			const graphType = parseHash().g ? 'scatter' : 'polyline';
+
+			const createPlot = (
+				data: [number, number][][], target: HTMLElement, size: typeof size1,
+			) => {
+				const syncSizePrev = (contentRect: DOMRectReadOnly) => {
+					size.height = Math.round(contentRect.height) - 20;
+					size.width = Math.round(contentRect.width) - 20;
+				};
+				syncSizePrev(target.getBoundingClientRect());
+
+				const xDomainData = filterByTime(data).flatMap((p_) => p_.map((pp_) => pp_[1]));
+
+				const bigOptions: FunctionPlotOptions & { target: HTMLElement; } = {
+					...options,
+					...size,
+					xAxis: {
+						domain: [
+							// Math.min(...data.flatMap((p_) => p_.map((pp_) => pp_[0]))),
+							// Math.max(...data.flatMap((p_) => p_.map((pp_) => pp_[0]))),
+							from,
+							to,
+						],
+						label: 'Время',
 					},
-				},
-				data: data.map((points) => ({
-					fnType: 'points',
-					graphType,
-					points,
-				})),
-				// data: [{
-				// 	fn: 'x^2',
-				// }],
+					yAxis: {
+						domain: [
+							Math.min(...xDomainData),
+							Math.max(...xDomainData),
+						],
+						label: 'Частота',
+					},
+					target,
+					tip: {
+						xLine: true,
+						yLine: true,
+						renderer(x, y, index) {
+							const args = { x, y, index };
+							console.log({ args });
+							return JSON.stringify(args);
+						},
+					},
+					data: data.map((points) => ({
+						fnType: 'points',
+						graphType,
+						points,
+					})),
+				};
+
+				const syncSize = (contentRect: DOMRectReadOnly) => {
+					syncSizePrev(contentRect);
+					bigOptions.height = size.height;
+					bigOptions.height = size.height;
+
+					console.log('update', size);
+
+					functionPlot(bigOptions);
+				};
+
+				const resizeObserver = new ResizeObserver(rAF((entries) => {
+					for (const entry of entries) {
+						syncSize(entry.contentRect);
+					}
+				}));
+
+				resizeObserver.observe(bigOptions.target);
+
+				return functionPlot(bigOptions);
 			};
 
-			const syncSize = (contentRect: DOMRectReadOnly) => {
-				syncSizePrev(contentRect);
-				bigOptions.height = size.height;
-				bigOptions.height = size.height;
+			return createPlot(bigData, thisPlot, size1);
+		});
 
-				console.log('update', size);
+		(a.addLink as any)(b);
+		(b.addLink as any)(a);
 
-				functionPlot(bigOptions);
-			};
-
-			const resizeObserver = new ResizeObserver(rAF((entries) => {
-				for (const entry of entries) {
-					syncSize(entry.contentRect);
-				}
-			}));
-
-			resizeObserver.observe(bigOptions.target);
-
-			functionPlot(bigOptions);
-		};
-
-		createPlot(bigData, plot, size1);
+		p.innerText = ((Date.now() - startFrom) / 1000).toFixed(3);
 	};
 
 	button2.click();

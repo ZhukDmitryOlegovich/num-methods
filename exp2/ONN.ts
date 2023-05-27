@@ -11,6 +11,7 @@ export class ONN {
 	constructor(
 		public K: M2,
 		public f: M1,
+		initPhi?: M1,
 	) {
 		this.N = f.length;
 
@@ -21,7 +22,7 @@ export class ONN {
 			throw new RangeError('incorrect size');
 		}
 
-		this.phi = [...f];
+		this.phi = initPhi || [...f];
 		this.dphi = [...f];
 	}
 

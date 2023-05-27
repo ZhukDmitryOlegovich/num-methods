@@ -1,7 +1,7 @@
 import { keyController } from '../contoller.js';
 import { intersects } from '../intersects.js';
 import { Car, Point, Vector } from './Car.js';
-import { left, right } from './path.js';
+import { checkpoints, left, right, } from './path.js';
 (() => {
     const node = document.getElementById('step2-input');
     const canvas = document.getElementById('step2-canvas');
@@ -34,13 +34,25 @@ import { left, right } from './path.js';
     buttonRight.innerText = 'вправо (D)';
     buttonRight.style.pointerEvents = 'none';
     div.appendChild(buttonRight);
-    const hideProps = document.createElement('button');
+    const hidePath = document.createElement('button');
     let visiblePath = true;
-    hideProps.innerHTML = '👀';
-    hideProps.onclick = () => { visiblePath = !visiblePath; };
-    div.appendChild(hideProps);
+    hidePath.innerHTML = '👀';
+    hidePath.onclick = () => {
+        visiblePath = !visiblePath;
+        hidePath.innerHTML = visiblePath ? '👀' : '🕶️';
+    };
+    div.appendChild(hidePath);
+    const hideEye = document.createElement('button');
+    let visibleEye = true;
+    hideEye.innerHTML = '🦇';
+    hideEye.onclick = () => {
+        visibleEye = !visibleEye;
+        hideEye.innerHTML = visibleEye ? '🦇' : '🚗';
+    };
+    div.appendChild(hideEye);
     node.appendChild(div);
     const fps = document.createElement('code');
+    fps.style.marginBottom = '1em';
     text.appendChild(fps);
     const ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -63,16 +75,17 @@ import { left, right } from './path.js';
     const w = 20;
     const h = 10;
     const s = 300;
-    const car = new Car(205, 320, {
-        speed: { min: -s, max: s },
+    let startAfterReset = start;
+    const car = new Car(55, 320, {
+        maxSpeed: s,
         turn: Math.PI,
         resistance: s,
         dspeed: 2 * s,
+        angle: -Math.PI / 2,
     });
-    car.angle = -Math.PI / 2;
     const OK = 'red';
-    const FAIL = 'green';
-    let carColor = OK;
+    // const FAIL = 'green';
+    const carColor = OK;
     const drawCar = () => {
         const cx = car.position.x;
         const cy = car.position.y;
@@ -93,20 +106,31 @@ import { left, right } from './path.js';
             x: x + w - miniW - 1, y: y + h - miniH - 1, w: miniW, h: miniH, cx, cy, a,
         });
     };
-    // const arrPoints: [number, number][] = [];
-    // canvas.addEventListener('mousedown', (e) => {
+    // const arrPoints: SLine[] = [];
+    // let lastPoint: SPoint | null = null;
+    // canvas.addEventListener('click', (e) => {
     // 	if (e.ctrlKey) {
-    // 		arrPoints.pop();
+    // 		if (lastPoint) {
+    // 			lastPoint = null;
+    // 		} else if (arrPoints.length !== 0) {
+    // 			[lastPoint] = arrPoints.pop()!;
+    // 		}
     // 		return;
     // 	}
-    // 	arrPoints.push([e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop]);
+    // 	const point: SPoint = [e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop];
+    // 	if (lastPoint) {
+    // 		arrPoints.push([lastPoint, point]);
+    // 		lastPoint = null;
+    // 	} else {
+    // 		lastPoint = point;
+    // 	}
     // 	console.log(arrPoints);
     // });
     const drawPath = (points, options = {}) => {
         if (!points.length) {
             return;
         }
-        ctx.lineWidth = 1;
+        ctx.lineWidth = options.lineWidth || 1;
         ctx.strokeStyle = options.color || 'darkrgey';
         ctx.beginPath();
         ctx.moveTo(...points[0]);
@@ -118,44 +142,119 @@ import { left, right } from './path.js';
         }
         ctx.stroke();
         ctx.closePath();
+        ctx.lineWidth = 1;
     };
     let collision = [];
     let carEyes = [];
     let carEyesCollision = [];
     const eyesInfo = [];
+    let hoverIndex = null;
+    let speedIndo = null;
+    const otherInfo = [];
     const depthEye = 200;
+    let nowCheckpointIndex = -1;
+    let nextCheckpointIndex = 0;
+    let countOkCheckpoints = 0;
+    let countNotOkCheckpoints = 0;
+    const chOK = 'rgba(0,255,0,.2)';
+    const chN = 'rgba(255,255,0,.2)';
+    const chF = 'rgba(255,0,0,.2)';
     const draw = () => {
+        var _a, _b, _c, _d, _e;
         drawCar();
         if (visiblePath) {
             drawPath(left, { close: true });
             drawPath(right, { close: true });
         }
-        collision.forEach(([x1, y1, x2, y2]) => {
-            drawPath([[x1, y1], [x2, y2]], { close: false, color: 'lightgrey' });
+        collision.forEach((line) => {
+            drawPath(line, { close: false, color: 'lightgrey' });
         });
-        carEyes.forEach(([x1, y1, x2, y2]) => {
-            drawPath([[x1, y1], [x2, y2]], { close: false, color: 'black' });
+        if (visibleEye) {
+            carEyes.forEach((line, i) => {
+                drawPath(line, { close: false, color: hoverIndex === i ? 'lightgreen' : 'black', lineWidth: hoverIndex === i ? 3 : 1 });
+            });
+        }
+        checkpoints.forEach((line, index) => {
+            drawPath(line, {
+                close: false,
+                color: index === nextCheckpointIndex
+                    ? chOK
+                    : index === nowCheckpointIndex
+                        ? chN
+                        : chF,
+                lineWidth: 3,
+            });
         });
         carEyesCollision.forEach((data, i) => {
             eyesInfo[i] ?? (eyesInfo[i] = (() => {
                 const p = document.createElement('code');
+                p.classList.add('select');
+                p.addEventListener('mouseover', () => {
+                    hoverIndex = i;
+                });
+                p.addEventListener('mouseout', () => {
+                    if (hoverIndex === i) {
+                        hoverIndex = null;
+                    }
+                });
                 text.appendChild(p);
                 return p;
             })());
             if (!data) {
-                eyesInfo[i].innerText = `${i}: 0.000`;
+                eyesInfo[i].innerText = `eye${i}: 0`;
                 return;
             }
             const [point, l2] = data;
-            eyesInfo[i].innerText = `${i}: ${(1 - Math.sqrt(l2) / depthEye).toFixed(3)}`;
-            const [x, y] = point;
-            ctx.beginPath();
-            ctx.fillStyle = 'lightgrey';
-            ctx.strokeStyle = 'black';
-            ctx.arc(x, y, 3, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.stroke();
+            eyesInfo[i].innerText = `eye${i}: ${(1 - Math.sqrt(l2) / depthEye).toFixed(2)}`;
+            if (visibleEye) {
+                const [x, y] = point;
+                ctx.beginPath();
+                ctx.fillStyle = 'lightgrey';
+                ctx.strokeStyle = 'black';
+                ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+            }
         });
+        speedIndo ?? (speedIndo = (() => {
+            const p = document.createElement('code');
+            p.style.marginBottom = '1em';
+            text.appendChild(p);
+            return p;
+        })());
+        speedIndo.innerText = `speed: ${(car.speed / car.options.maxSpeed).toFixed(2)}`;
+        let ind = -1;
+        otherInfo[_a = ++ind] ?? (otherInfo[_a] = (() => {
+            const p = document.createElement('code');
+            text.appendChild(p);
+            return p;
+        })());
+        otherInfo[ind].innerText = `direction: ${car.getDirection().toFixed(2)}`;
+        otherInfo[_b = ++ind] ?? (otherInfo[_b] = (() => {
+            const p = document.createElement('code');
+            p.style.marginBottom = '1em';
+            text.appendChild(p);
+            return p;
+        })());
+        otherInfo[ind].innerText = `turn: ${car.getTurn().toFixed(2)}`;
+        otherInfo[_c = ++ind] ?? (otherInfo[_c] = (() => {
+            const p = document.createElement('code');
+            text.appendChild(p);
+            return p;
+        })());
+        otherInfo[ind].innerText = `ok: ${countOkCheckpoints}`;
+        otherInfo[_d = ++ind] ?? (otherInfo[_d] = (() => {
+            const p = document.createElement('code');
+            text.appendChild(p);
+            return p;
+        })());
+        otherInfo[ind].innerText = `not-ok: ${countNotOkCheckpoints}`;
+        otherInfo[_e = ++ind] ?? (otherInfo[_e] = (() => {
+            const p = document.createElement('code');
+            text.appendChild(p);
+            return p;
+        })());
+        otherInfo[ind].innerText = `time: ${((Date.now() - startAfterReset) / 1000).toFixed(0)}`;
     };
     let lastInc = start;
     let arrDeltaTime = [];
@@ -194,30 +293,50 @@ import { left, right } from './path.js';
             const p1 = new Point(...data);
             $moveToCar(p1);
             const p2 = p1.clone().$move(Vector.Polar(depthEye, a + car.angle));
-            return [...p1.toArr(), ...p2.toArr()];
+            return [p1.toArr(), p2.toArr()];
         });
         const carCollision = carPoints
             .map((point) => point.toArr())
-            .map((point, i, arr) => [...point, ...at(arr, i + 1)]);
+            .map((point, i, arr) => [point, at(arr, i + 1)]);
         const createLinesWithClosePath = (path) => path
-            .map((point, i, arr) => [...point, ...at(arr, i + 1)]);
+            .map((point, i, arr) => [point, at(arr, i + 1)]);
         const checkCollisionByLines = (line) => carCollision
-            .some((carLine) => intersects(...carLine, ...line));
+            .some((carLine) => intersects(carLine, line));
         const allCheckColisionLine = [
             left, right,
         ].flatMap(createLinesWithClosePath);
         collision = allCheckColisionLine.filter(checkCollisionByLines);
+        const findIndexCheckpointCollision = checkpoints.findIndex(checkCollisionByLines);
+        if (findIndexCheckpointCollision !== -1
+            && nowCheckpointIndex !== findIndexCheckpointCollision) {
+            if (findIndexCheckpointCollision === nextCheckpointIndex) {
+                countOkCheckpoints++;
+            }
+            else {
+                countNotOkCheckpoints++;
+            }
+            nowCheckpointIndex = findIndexCheckpointCollision;
+            nextCheckpointIndex = (nowCheckpointIndex + 1) % checkpoints.length;
+        }
         carEyesCollision = carEyes.map((line) => allCheckColisionLine.reduce((ans, oLine) => {
-            const inter = intersects(...line, ...oLine);
+            const inter = intersects(line, oLine);
             if (inter) {
-                const l2 = length2(line[0], line[1], ...inter);
+                const l2 = length2(line[0][0], line[0][1], ...inter);
                 if (!ans || l2 < ans[1]) {
                     return [inter, l2];
                 }
             }
             return ans;
         }, null));
-        carColor = collision.length === 0 ? OK : FAIL;
+        if (collision.length) {
+            car.$reset();
+            startAfterReset = Date.now();
+            countOkCheckpoints = 0;
+            countNotOkCheckpoints = 0;
+            nowCheckpointIndex = -1;
+            nextCheckpointIndex = 0;
+        }
+        // carColor = collision.length === 0 ? OK : FAIL;
     };
     const inc = () => {
         const now = Date.now();

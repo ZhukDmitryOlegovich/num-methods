@@ -12,12 +12,9 @@
 <body style="height: auto;">
 	<div style="display: flex; align-items: center; gap: 4px;">
 		<a href="https://github.com/ZhukDmitryOlegovich/num-methods/tree/main/exp2/step2">Ссылка на исходники</a>
-		<!-- <script>document.body.style.zoom = 1.0</script>
-		<button onclick="document.body.style.zoom -= -0.1">zoom +</button>
-		<button onclick="document.body.style.zoom -= 0.1">zoom -</button> -->
 		<div style="flex-grow: 1;"></div>
-		<button onclick="location.href='../../step1'">step1</button>
-		<button onclick="location.href='../../step2'">step2</button>
+		<button onclick="location.href='../step1'">step1</button>
+		<button onclick="location.href='../step2'">step2</button>
 	</div>
 	<h2>Изучение №2</h2>
 
@@ -31,11 +28,18 @@
 		body {
 			user-select: none;
 		}
+		code {
+			font-size: 14px;
+		}
+		code.select:hover {
+			font-weight: bold;
+			background-color: lightgreen;
+		}
 	</style>
 
 	<div id="step2-input" style="display: flex;flex-direction: column;align-items: baseline;"></div>
 	<div style="display: flex; flex-direction: row;">
-		<canvas id="step2-canvas" width="1200" height="600" style="background-color: aliceblue;"></canvas>
+		<canvas id="step2-canvas" width="950" height="600" style="background-color: aliceblue;"></canvas>
 		<div id="step2-text" style="display: flex; flex-direction: column;"></div>
 	</div>
 

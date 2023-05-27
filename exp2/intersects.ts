@@ -1,11 +1,9 @@
-import { FixedArr } from './FixedArr';
+import { SLine, SPoint } from './step2/path';
 
 export const intersects = (
-	x11: number, y11: number,
-	x12: number, y12: number,
-	x21: number, y21: number,
-	x22: number, y22: number,
-): FixedArr<2, number> | null => {
+	[[x11, y11], [x12, y12]]: SLine,
+	[[x21, y21], [x22, y22]]: SLine,
+): SPoint | null => {
 	const det = (x12 - x11) * (y22 - y21) - (x22 - x21) * (y12 - y11);
 	if (det === 0) {
 		return null;

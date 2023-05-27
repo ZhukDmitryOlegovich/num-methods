@@ -1,4 +1,4 @@
-export const intersects = (x11, y11, x12, y12, x21, y21, x22, y22) => {
+export const intersects = ([[x11, y11], [x12, y12]], [[x21, y21], [x22, y22]]) => {
     const det = (x12 - x11) * (y22 - y21) - (x22 - x21) * (y12 - y11);
     if (det === 0) {
         return null;
