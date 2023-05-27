@@ -55,7 +55,9 @@
         "import/extensions": "off",
         "import/prefer-default-export": "off",
         "no-useless-constructor": "off",
-        "no-empty-function": "warn",
+        "no-empty-function": ["warn", {"allow": ["constructors"]}],
+        "no-nested-ternary": "off",
+        "no-console": ["warn", {"allow": ["error"]}],
         "no-unused-vars": [
             "error",
             {

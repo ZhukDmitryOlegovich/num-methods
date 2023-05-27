@@ -1,20 +1,15 @@
-import functionPlot from 'function-plot';
-import { FunctionPlotOptions } from 'function-plot/dist/types';
-
-import { fromLength } from '@/math/utils';
-import { parseHash } from '@/utils/parseHash';
-
-import { Arr10 } from '../FixedArr';
-import { M2 } from '../Matrix';
-import { ONN } from '../ONN';
-import { rAF } from '../rAF';
+import { keyController } from '../contoller';
+import { FixedArr } from '../FixedArr';
+import { intersects } from '../intersects';
+import { Car, Point, Vector } from './Car';
+import { left, right } from './path';
 
 (() => {
-	const node = document.getElementById('step1-input');
-	const plot = document.getElementById('step1-plot');
-	// const plot2 = document.getElementById('step1-plot2');
+	const node = document.getElementById('step2-input');
+	const canvas = document.getElementById('step2-canvas') as HTMLCanvasElement | null;
+	const text = document.getElementById('step2-text');
 
-	if (!node || !plot) {
+	if (!node || !canvas || !text) {
 		console.error('fail not found');
 		return;
 	}
@@ -25,167 +20,330 @@ import { rAF } from '../rAF';
 	div.style.flexDirection = 'row';
 	div.style.alignItems = 'baseline';
 
-	div.appendChild(document.createTextNode('t (step)\xa0'));
+	const buttonUp = document.createElement('button');
+	buttonUp.innerText = 'вперед (W)';
+	buttonUp.style.pointerEvents = 'none';
+	div.appendChild(buttonUp);
 
-	const inputT = document.createElement('input');
-	inputT.type = 'number';
-	inputT.placeholder = 't';
-	inputT.valueAsNumber = 0.004;
-	div.appendChild(inputT);
+	const buttonBack = document.createElement('button');
+	buttonBack.innerText = 'назад (S)';
+	buttonBack.style.pointerEvents = 'none';
+	div.appendChild(buttonBack);
 
-	div.appendChild(document.createTextNode('\xa0| to (end)\xa0'));
+	const buttonStop = document.createElement('button');
+	buttonStop.innerText = 'стоп (space)';
+	buttonStop.style.pointerEvents = 'none';
+	div.appendChild(buttonStop);
 
-	const inputTo = document.createElement('input');
-	inputTo.type = 'number';
-	inputTo.placeholder = 'to';
-	inputTo.valueAsNumber = 0.3;
-	div.appendChild(inputTo);
+	const buttonLeft = document.createElement('button');
+	buttonLeft.innerText = 'влево (A)';
+	buttonLeft.style.pointerEvents = 'none';
+	div.appendChild(buttonLeft);
 
-	const button2 = document.createElement('button');
-	button2.innerText = 'Сгенерить';
-	div.appendChild(button2);
+	const buttonRight = document.createElement('button');
+	buttonRight.innerText = 'вправо (D)';
+	buttonRight.style.pointerEvents = 'none';
+	div.appendChild(buttonRight);
+
+	const hideProps = document.createElement('button');
+	let visiblePath = true;
+	hideProps.innerHTML = '👀';
+	hideProps.onclick = () => { visiblePath = !visiblePath; };
+	div.appendChild(hideProps);
 
 	node.appendChild(div);
 
-	const p = document.createElement('p');
-	div.appendChild(p);
+	const fps = document.createElement('code');
+	text.appendChild(fps);
 
-	const size1: Pick<FunctionPlotOptions, 'height' | 'width'> = {
-		height: undefined,
-		width: undefined,
+	const ctx = canvas.getContext('2d');
+
+	if (!ctx) {
+		console.error('fail not found ctx');
+		return;
+	}
+
+	type AllOrNever<T> = T | Partial<Record<keyof T, never>>;
+
+	// eslint-disable-next-line no-unused-vars
+	const aToPi = (angle: number) => angle / 180 * Math.PI;
+	// eslint-disable-next-line no-unused-vars
+	const piToA = (radian: number) => radian * 180 / Math.PI;
+
+	const fillRect = ({
+		x, y, w, h, a = 0, cx = x + w / 2, cy = y + h / 2,
+	}: {
+		x: number,
+		y: number,
+		w: number,
+		h: number,
+		a?: number,
+	} & AllOrNever<{
+		cx: number,
+		cy: number,
+	}>) => {
+		ctx.translate(cx, cy);
+		ctx.rotate(a);
+		ctx.translate(-cx, -cy);
+
+		ctx.fillRect(x, y, w, h);
+
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
 	};
 
-	button2.onclick = () => {
-		const startFrom = Date.now();
+	const start = Date.now();
 
-		const t = inputT.valueAsNumber;
-		const to = inputTo.valueAsNumber;
+	const { keyActive } = keyController();
 
-		const bigData: [number, number][][] = [];
+	const w = 20;
+	const h = 10;
 
-		const f: Arr10 = [21, 14, 10, 15, 20, 25, 12.5, 17.5, 17.5, 22.5];
+	const s = 300;
 
-		// const getA = (h: number) => {
-		// 	if (h === 0 || h === 1) {
-		// 		return 4;
-		// 	}
-		// 	return 1;
-		// };
-		// const K = fromLength(10, (i) => fromLength(10, (j) => {
-		// 	const kij = (() => {
-		// 		if ((i === 0)
-		// 			|| (i === 1) || (i === j)) {
-		// 			return 0;
-		// 		}
-		// 		return 1;
-		// 	})();
-		// 	return getA(i) * getA(j) * kij;
-		// })) as M2;
+	const car = new Car(205, 320, {
+		speed: { min: -s, max: s },
+		turn: Math.PI,
+		resistance: s,
+		dspeed: 2 * s,
+	});
 
-		const e: Arr10 = [4, 4, 1, 1, 1, 1, 1, 1, 1, 1];
-		const K = fromLength(10, (i) => fromLength(10, (j) => e[i] * e[j])) as M2;
+	car.angle = -Math.PI / 2;
+	const OK = 'red';
+	const FAIL = 'green';
+	let carColor = OK;
 
-		const onn = new ONN(K, f);
-		console.log({ K, f });
+	const drawCar = () => {
+		const cx = car.position.x;
+		const cy = car.position.y;
+		const x = cx - w / 2;
+		const y = cy - h / 2;
+		const a = car.angle;
+		ctx.fillStyle = carColor;
+		fillRect({
+			x, y, w, h, cx, cy, a,
+		});
 
-		const saveDate = (now: number) => {
-			onn.dphi.forEach((dphi, i) => {
-				(bigData[i] ??= []).push([now, dphi]);
-			});
-		};
+		const miniW = w / 8;
+		const miniH = h / 3;
 
-		let now = 0;
-		saveDate(now);
-		for (let i = 0; now <= to; i += 1, now = t * i) {
-			onn.step(t);
-			saveDate(now);
+		ctx.fillStyle = 'black';
+		fillRect({
+			x: x + w - miniW - 1, y: y + 1, w: miniW, h: miniH, cx, cy, a,
+		});
+		fillRect({
+			x: x + w - miniW - 1, y: y + h - miniH - 1, w: miniW, h: miniH, cx, cy, a,
+		});
+	};
+
+	// const arrPoints: [number, number][] = [];
+	// canvas.addEventListener('mousedown', (e) => {
+	// 	if (e.ctrlKey) {
+	// 		arrPoints.pop();
+	// 		return;
+	// 	}
+
+	// 	arrPoints.push([e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop]);
+
+	// 	console.log(arrPoints);
+	// });
+
+	const drawPath = (
+		points: [number, number][],
+		options: { close?: boolean, color?: string; } = {},
+	) => {
+		if (!points.length) {
+			return;
+		}
+		ctx.lineWidth = 1;
+		ctx.strokeStyle = options.color || 'darkrgey';
+
+		ctx.beginPath();
+		ctx.moveTo(...points[0]);
+
+		points.slice(1).forEach((point) => {
+			ctx.lineTo(...point);
+		});
+
+		if (options.close) {
+			ctx.lineTo(...points[0]);
 		}
 
-		p.innerText = ((Date.now() - startFrom) / 1000).toPrecision(3);
-		console.log({ bigData });
-
-		const options: Omit<FunctionPlotOptions, 'target' | 'data'> = {
-			// xAxis: {
-			// 	// domain: [from, to],
-			// },
-			// yAxis: {
-			// 	// type: 'log',
-			// 	domain: [minY, maxY],
-			// },
-			grid: true,
-		};
-
-		const graphType = parseHash().g ? 'scatter' : 'polyline';
-
-		const createPlot = (
-			data: [number, number][][], target: HTMLElement, size: typeof size1,
-		) => {
-			const syncSizePrev = (contentRect: DOMRectReadOnly) => {
-				size.height = Math.round(contentRect.height) - 20;
-				size.width = Math.round(contentRect.width) - 20;
-			};
-			syncSizePrev(target.getBoundingClientRect());
-
-			const bigOptions: FunctionPlotOptions & { target: HTMLElement; } = {
-				...options,
-				...size,
-				xAxis: {
-					domain: [
-						Math.min(...data.flatMap((p_) => p_.map((pp_) => pp_[0]))),
-						Math.max(...data.flatMap((p_) => p_.map((pp_) => pp_[0]))),
-					],
-					label: 'Время',
-				},
-				yAxis: {
-					domain: [
-						Math.min(...data.flatMap((p_) => p_.map((pp_) => pp_[1]))),
-						Math.max(...data.flatMap((p_) => p_.map((pp_) => pp_[1]))),
-					],
-					label: 'Частота',
-				},
-				target,
-				tip: {
-					xLine: true,
-					yLine: true,
-					renderer(x, y, index) {
-						const args = { x, y, index };
-						console.log({ args });
-						return JSON.stringify(args);
-					},
-				},
-				data: data.map((points) => ({
-					fnType: 'points',
-					graphType,
-					points,
-				})),
-				// data: [{
-				// 	fn: 'x^2',
-				// }],
-			};
-
-			const syncSize = (contentRect: DOMRectReadOnly) => {
-				syncSizePrev(contentRect);
-				bigOptions.height = size.height;
-				bigOptions.height = size.height;
-
-				console.log('update', size);
-
-				functionPlot(bigOptions);
-			};
-
-			const resizeObserver = new ResizeObserver(rAF((entries) => {
-				for (const entry of entries) {
-					syncSize(entry.contentRect);
-				}
-			}));
-
-			resizeObserver.observe(bigOptions.target);
-
-			functionPlot(bigOptions);
-		};
-
-		createPlot(bigData, plot, size1);
+		ctx.stroke();
+		ctx.closePath();
 	};
 
-	button2.click();
+	let collision: FixedArr<4, number>[] = [];
+	let carEyes: FixedArr<4, number>[] = [];
+	let carEyesCollision: ([NonNullable<ReturnType<typeof intersects>>, number] | null)[] = [];
+
+	const eyesInfo: HTMLElement[] = [];
+
+	const depthEye = 200;
+
+	const draw = () => {
+		drawCar();
+		if (visiblePath) {
+			drawPath(left, { close: true });
+			drawPath(right, { close: true });
+		}
+		collision.forEach(([x1, y1, x2, y2]) => {
+			drawPath([[x1, y1], [x2, y2]], { close: false, color: 'lightgrey' });
+		});
+		carEyes.forEach(([x1, y1, x2, y2]) => {
+			drawPath([[x1, y1], [x2, y2]], { close: false, color: 'black' });
+		});
+		carEyesCollision.forEach((data, i) => {
+			eyesInfo[i] ??= (() => {
+				const p = document.createElement('code');
+				text.appendChild(p);
+				return p;
+			})();
+			if (!data) {
+				eyesInfo[i].innerText = `${i}: 0.000`;
+				return;
+			}
+			const [point, l2] = data;
+			eyesInfo[i].innerText = `${i}: ${(1 - Math.sqrt(l2) / depthEye).toFixed(3)}`;
+			const [x, y] = point;
+			ctx.beginPath();
+			ctx.fillStyle = 'lightgrey';
+			ctx.strokeStyle = 'black';
+			ctx.arc(x, y, 3, 0, 2 * Math.PI);
+			ctx.fill();
+			ctx.stroke();
+		});
+	};
+
+	let lastInc = start;
+	let arrDeltaTime: number[] = [];
+	let lastFPS = 'NaN';
+
+	setInterval(() => {
+		const newFPS = (arrDeltaTime.length / arrDeltaTime.reduce((a, b) => a + b, 0)).toFixed(0);
+		if (newFPS !== lastFPS) {
+			lastFPS = newFPS;
+			fps.innerText = `fps: ${newFPS}`;
+		}
+	}, 300);
+
+	const at = <Arr extends any[]>(arr: Arr, index: number): Arr[number] => arr[
+		((index % arr.length) + arr.length) % arr.length
+	];
+
+	const length2 = (
+		x1: number, y1: number, x2: number, y2: number,
+	) => (x1 - x2) ** 2 + (y1 - y2) ** 2;
+
+	const checkCollision = () => {
+		const x = w / 2;
+		const y = h / 2;
+
+		const $moveToCar = (point: Point) => point.$rotate(car.angle).$move(car.position);
+
+		const carPoints = ([
+			[x, y],
+			[x, -y],
+			[-x, -y],
+			[-x, y],
+		] as const).map((data) => new Point(...data)).map($moveToCar);
+
+		type Eye = [[number, number], number][];
+
+		carEyes = ([
+			[[x, 0], 0],
+			[[x, y], Math.PI / 12],
+			[[x, y], Math.PI / 4],
+			[[x, y], Math.PI / 2],
+			[[-x, y], 3 * Math.PI / 4],
+			[[-x, 0], Math.PI],
+		] as Eye)
+			.flatMap((data): Eye => (data[0][1] === 0 && data[1] % Math.PI === 0
+				? [data]
+				: [data, [[data[0][0], -data[0][1]], -data[1]]]))
+			.map(([data, a]): FixedArr<4, number> => {
+				const p1 = new Point(...data);
+				$moveToCar(p1);
+				const p2 = p1.clone().$move(Vector.Polar(depthEye, a + car.angle));
+				return [...p1.toArr(), ...p2.toArr()];
+			});
+
+		const carCollision = carPoints
+			.map((point) => point.toArr())
+			.map((point, i, arr): FixedArr<4, number> => [...point, ...at(arr, i + 1)]);
+
+		const createLinesWithClosePath = (path: [number, number][]) => path
+			.map((point, i, arr): FixedArr<4, number> => [...point, ...at(arr, i + 1)]);
+
+		const checkCollisionByLines = (line: FixedArr<4, number>) => carCollision
+			.some((carLine) => intersects(...carLine, ...line));
+
+		const allCheckColisionLine = [
+			left, right,
+		].flatMap(createLinesWithClosePath);
+
+		collision = allCheckColisionLine.filter(checkCollisionByLines);
+
+		carEyesCollision = carEyes.map((line) => allCheckColisionLine.reduce<
+			[NonNullable<ReturnType<typeof intersects>>, number] | null
+		>((ans, oLine) => {
+			const inter = intersects(...line, ...oLine);
+			if (inter) {
+				const l2 = length2(line[0], line[1], ...inter);
+				if (!ans || l2 < ans[1]) {
+					return [inter, l2];
+				}
+			}
+			return ans;
+		}, null));
+
+		carColor = collision.length === 0 ? OK : FAIL;
+	};
+
+	const inc = () => {
+		const now = Date.now();
+		const deltaTime = (now - lastInc) / 1000;
+		arrDeltaTime.push(deltaTime);
+		arrDeltaTime = arrDeltaTime.slice(-20);
+		lastInc = now;
+
+		if (keyActive('space')) {
+			car.direction = 'stop';
+		} else if (keyActive('up')) {
+			car.direction = 'forward';
+		} else if (keyActive('down')) {
+			car.direction = 'back';
+		} else {
+			car.direction = null;
+		}
+
+		if (keyActive('left')) {
+			car.turn = 'left';
+		} else if (keyActive('right')) {
+			car.turn = 'right';
+		} else {
+			car.turn = null;
+		}
+
+		buttonUp.disabled = (car.direction !== 'forward');
+		buttonBack.disabled = (car.direction !== 'back');
+		buttonStop.disabled = (car.direction !== 'stop');
+		buttonLeft.disabled = (car.turn !== 'left');
+		buttonRight.disabled = (car.turn !== 'right');
+
+		car.$step(deltaTime);
+
+		checkCollision();
+	};
+
+	const step = () => {
+		requestAnimationFrame(step);
+		inc();
+		ctx.save();
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		draw();
+		ctx.restore();
+	};
+
+	requestAnimationFrame(step);
 })();
