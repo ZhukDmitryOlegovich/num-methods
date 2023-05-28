@@ -1,4 +1,4 @@
-import { imports } from '@/utils/imports';
+import { importsJSON } from '@/utils/imports';
 import { parseHash } from '@/utils/parseHash';
 
 declare let vis: any;
@@ -81,7 +81,7 @@ const getKorilation = (arr: number[][], i: number) => {
 	})();
 
 	const calc = () => {
-		imports('./parsed_data.json').then((bigData: any) => {
+		importsJSON('./parsed_data.json').then((bigData: any) => {
 			const data = new vis.DataSet();
 			console.log(bigData);
 

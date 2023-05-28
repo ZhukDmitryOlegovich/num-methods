@@ -45,11 +45,13 @@ import { rAF } from '../rAF.js';
     };
     button2.onclick = () => {
         const startFrom = Date.now();
-        const initPhi = Array.from({ length: 10 }).map((_, i, arr) => Math.random() * 2 * Math.PI);
+        const initPhi = Array.from({ length: 10 }, (_, i) => Math.random() * 2 * Math.PI);
         const t = inputT.valueAsNumber;
         const to = inputTo.valueAsNumber;
         const from = inputFrom.valueAsNumber;
         const filterByTime = (data) => data.map((minidata) => minidata.filter(([time]) => from <= time && time <= to));
+        // const f = Array.from({ length: 10 }, (_, i) => (
+        // 	i > 5 ? Math.random() * 30 : Math.random() * 20 - 10));
         const [a, b] = [plot, plot2].map((thisPlot, ii) => {
             const bigData = [];
             const f = [21, 14, 10, 15, 20, 25, 12.5, 17.5, ii === 1 ? 40 : 17.5, 22.5];

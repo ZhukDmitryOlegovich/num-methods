@@ -12,7 +12,7 @@ const files = FileHound.create()
 	.ext('js')
 	.find();
 
-const deleteName = ['pixi.js', 'function-plot', 'mathjs', 'vis-graph3d'];
+const deleteName = ['pixi.js', 'function-plot', 'mathjs', 'vis-graph3d', 'brain.js'];
 let countFail = 0;
 
 files.then(

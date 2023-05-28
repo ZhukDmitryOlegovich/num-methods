@@ -1,7 +1,31 @@
+/* import brain from 'brain.js'; */
+import { importsJSON } from '../../utils/imports.js';
+import { parseHash } from '../../utils/parseHash.js';
 import { keyController } from '../contoller.js';
 import { intersects } from '../intersects.js';
 import { Car, Point, Vector } from './Car.js';
 import { checkpoints, left, right, } from './path.js';
+// type Net = InstanceType<typeof brain.NeuralNetwork>;
+// type Data = Parameters<Net['train']>[0];
+const net = new brain.NeuralNetwork({
+    activation: 'sigmoid',
+    hiddenLayers: [6],
+    iterations: 2000 * (+parseHash().iter || 1),
+    learningRate: +parseHash().rate || 0.2,
+});
+// @ts-ignore
+window.net = net;
+let netTrained = false;
+// eslint-disable-next-line no-unused-vars
+const rand = (() => {
+    let next = 0;
+    const mod = 2 ** 31;
+    return (newNext) => {
+        next = newNext || next;
+        next = (next * 1103515245 + 12345) % mod;
+        return next / mod;
+    };
+})();
 (() => {
     const node = document.getElementById('step2-input');
     const canvas = document.getElementById('step2-canvas');
@@ -50,6 +74,25 @@ import { checkpoints, left, right, } from './path.js';
         hideEye.innerHTML = visibleEye ? '🦇' : '🚗';
     };
     div.appendChild(hideEye);
+    const useBotButton = document.createElement('button');
+    let useBot = true;
+    useBotButton.innerHTML = '🦾';
+    useBotButton.onclick = () => {
+        useBot = !useBot;
+        useBotButton.innerHTML = useBot ? '🦾' : '💪';
+    };
+    div.appendChild(useBotButton);
+    const restartButton = document.createElement('button');
+    restartButton.innerHTML = '🔄';
+    div.appendChild(restartButton);
+    const restartLoopButton = document.createElement('button');
+    let restartLoop = true;
+    restartLoopButton.innerHTML = '1️⃣';
+    restartLoopButton.onclick = () => {
+        restartLoop = !restartLoop;
+        restartLoopButton.innerHTML = restartLoop ? '1️⃣' : '♾️';
+    };
+    div.appendChild(restartLoopButton);
     node.appendChild(div);
     const fps = document.createElement('code');
     fps.style.marginBottom = '1em';
@@ -159,6 +202,8 @@ import { checkpoints, left, right, } from './path.js';
     const chOK = 'rgba(0,255,0,.2)';
     const chN = 'rgba(255,255,0,.2)';
     const chF = 'rgba(255,0,0,.2)';
+    const neuralValueInput = [];
+    const neuralValueOutput = [];
     const draw = () => {
         var _a, _b, _c, _d, _e;
         drawCar();
@@ -174,17 +219,19 @@ import { checkpoints, left, right, } from './path.js';
                 drawPath(line, { close: false, color: hoverIndex === i ? 'lightgreen' : 'black', lineWidth: hoverIndex === i ? 3 : 1 });
             });
         }
-        checkpoints.forEach((line, index) => {
-            drawPath(line, {
-                close: false,
-                color: index === nextCheckpointIndex
-                    ? chOK
-                    : index === nowCheckpointIndex
-                        ? chN
-                        : chF,
-                lineWidth: 3,
+        if (visiblePath) {
+            checkpoints.forEach((line, index) => {
+                drawPath(line, {
+                    close: false,
+                    color: index === nextCheckpointIndex
+                        ? chOK
+                        : index === nowCheckpointIndex
+                            ? chN
+                            : chF,
+                    lineWidth: 3,
+                });
             });
-        });
+        }
         carEyesCollision.forEach((data, i) => {
             eyesInfo[i] ?? (eyesInfo[i] = (() => {
                 const p = document.createElement('code');
@@ -201,11 +248,13 @@ import { checkpoints, left, right, } from './path.js';
                 return p;
             })());
             if (!data) {
+                neuralValueInput[i] = 0;
                 eyesInfo[i].innerText = `eye${i}: 0`;
                 return;
             }
             const [point, l2] = data;
-            eyesInfo[i].innerText = `eye${i}: ${(1 - Math.sqrt(l2) / depthEye).toFixed(2)}`;
+            neuralValueInput[i] = 1 - Math.sqrt(l2) / depthEye;
+            eyesInfo[i].innerText = `eye${i}: ${neuralValueInput[i].toFixed(2)}`;
             if (visibleEye) {
                 const [x, y] = point;
                 ctx.beginPath();
@@ -222,21 +271,25 @@ import { checkpoints, left, right, } from './path.js';
             text.appendChild(p);
             return p;
         })());
-        speedIndo.innerText = `speed: ${(car.speed / car.options.maxSpeed).toFixed(2)}`;
+        const speedIndexNeuralValue = carEyesCollision.length;
+        neuralValueInput[speedIndexNeuralValue] = (car.speed / car.options.maxSpeed + 1) / 2;
+        speedIndo.innerText = `speed: ${neuralValueInput[speedIndexNeuralValue].toFixed(2)}`;
         let ind = -1;
         otherInfo[_a = ++ind] ?? (otherInfo[_a] = (() => {
             const p = document.createElement('code');
             text.appendChild(p);
             return p;
         })());
-        otherInfo[ind].innerText = `direction: ${car.getDirection().toFixed(2)}`;
+        neuralValueOutput[ind] = Math.max(car.getDirection(), 0);
+        otherInfo[ind].innerText = `direction: ${neuralValueOutput[ind].toFixed(2)}`;
         otherInfo[_b = ++ind] ?? (otherInfo[_b] = (() => {
             const p = document.createElement('code');
             p.style.marginBottom = '1em';
             text.appendChild(p);
             return p;
         })());
-        otherInfo[ind].innerText = `turn: ${car.getTurn().toFixed(2)}`;
+        neuralValueOutput[ind] = (car.getTurn() + 1) / 2;
+        otherInfo[ind].innerText = `turn: ${neuralValueOutput[ind].toFixed(2)}`;
         otherInfo[_c = ++ind] ?? (otherInfo[_c] = (() => {
             const p = document.createElement('code');
             text.appendChild(p);
@@ -255,6 +308,7 @@ import { checkpoints, left, right, } from './path.js';
             return p;
         })());
         otherInfo[ind].innerText = `time: ${((Date.now() - startAfterReset) / 1000).toFixed(0)}`;
+        dataForNeural.push({ in: [...neuralValueInput], out: [...neuralValueOutput] });
     };
     let lastInc = start;
     let arrDeltaTime = [];
@@ -266,8 +320,40 @@ import { checkpoints, left, right, } from './path.js';
             fps.innerText = `fps: ${newFPS}`;
         }
     }, 300);
+    const dataForNeural = [];
+    const bigData = [];
+    // setInterval(() => {
+    // 	dataForNeural.push({ in: [...neuralValueInput], out: [...neuralValueOutput] });
+    // }, 10);
     const at = (arr, index) => arr[((index % arr.length) + arr.length) % arr.length];
     const length2 = (x1, y1, x2, y2) => (x1 - x2) ** 2 + (y1 - y2) ** 2;
+    let wasFinish = false;
+    const restart = () => {
+        wasFinish = countOkCheckpoints >= 50;
+        if (countOkCheckpoints >= 50) {
+            bigData.push(...dataForNeural);
+            console.log('=>', bigData);
+            if (restartLoop) {
+                car.$reset();
+                nowCheckpointIndex = -1;
+                nextCheckpointIndex = 0;
+            }
+        }
+        else {
+            if (netTrained && useBot && restartLoop && !wasFinish) {
+                window.location.reload();
+            }
+            car.$reset();
+            nowCheckpointIndex = -1;
+            nextCheckpointIndex = 0;
+        }
+        console.log('restart');
+        dataForNeural.length = 0;
+        startAfterReset = Date.now();
+        countOkCheckpoints = 0;
+        countNotOkCheckpoints = 0;
+    };
+    restartButton.onclick = restart;
     const checkCollision = () => {
         const x = w / 2;
         const y = h / 2;
@@ -328,13 +414,8 @@ import { checkpoints, left, right, } from './path.js';
             }
             return ans;
         }, null));
-        if (collision.length) {
-            car.$reset();
-            startAfterReset = Date.now();
-            countOkCheckpoints = 0;
-            countNotOkCheckpoints = 0;
-            nowCheckpointIndex = -1;
-            nextCheckpointIndex = 0;
+        if (collision.length || countNotOkCheckpoints !== 0 || countOkCheckpoints >= 50) {
+            restart();
         }
         // carColor = collision.length === 0 ? OK : FAIL;
     };
@@ -344,26 +425,37 @@ import { checkpoints, left, right, } from './path.js';
         arrDeltaTime.push(deltaTime);
         arrDeltaTime = arrDeltaTime.slice(-20);
         lastInc = now;
-        if (keyActive('space')) {
-            car.direction = 'stop';
-        }
-        else if (keyActive('up')) {
-            car.direction = 'forward';
-        }
-        else if (keyActive('down')) {
-            car.direction = 'back';
-        }
-        else {
-            car.direction = null;
-        }
-        if (keyActive('left')) {
-            car.turn = 'left';
-        }
-        else if (keyActive('right')) {
-            car.turn = 'right';
+        if (netTrained && useBot) {
+            const run = net.run(neuralValueInput);
+            // стало от 0 до 1
+            // а надо от -1 до 1
+            // eslint-disable-next-line prefer-destructuring
+            car.direction = 2 * run[0] - 1;
+            car.turn = 2 * run[1] - 1;
+            // car.direction = Math.max(car.direction, 0.02);
         }
         else {
-            car.turn = null;
+            if (keyActive('space')) {
+                car.direction = 'stop';
+            }
+            else if (keyActive('up')) {
+                car.direction = 'forward';
+            }
+            else if (keyActive('down')) {
+                car.direction = 'back';
+            }
+            else {
+                car.direction = null;
+            }
+            if (keyActive('left')) {
+                car.turn = 'left';
+            }
+            else if (keyActive('right')) {
+                car.turn = 'right';
+            }
+            else {
+                car.turn = null;
+            }
         }
         buttonUp.disabled = (car.direction !== 'forward');
         buttonBack.disabled = (car.direction !== 'back');
@@ -383,4 +475,48 @@ import { checkpoints, left, right, } from './path.js';
         ctx.restore();
     };
     requestAnimationFrame(step);
+    const seePath = parseHash().see;
+    if (+parseHash().train) {
+        importsJSON('../data.json').then(async (data) => {
+            const normalData = data.map((pieceData) => {
+                const output = pieceData.out;
+                output[0] = output[0] / 2 + 0.5;
+                return {
+                    input: pieceData.in,
+                    // см. https://github.com/BrainJS/brain.js#for-training-with-neuralnetwork
+                    output,
+                };
+            });
+            // random position
+            // normalData.sort(() => rand() - 0.5);
+            // if (+parseHash().reverse) {
+            // 	normalData.reverse();
+            // }
+            const norm2 = (x) => typeof x === 'number' && 0 <= x && x <= 1;
+            const norm = (x) => Array.isArray(x) && x.every(norm2);
+            console.log(normalData.find(({ input, output }) => !(norm(input) && norm(output))));
+            const trainPart = 1;
+            const trainSize = Math.round(normalData.length * trainPart);
+            const trainData = normalData.slice(0, trainSize);
+            console.log('=>', 'start', 'netTrained', trainData);
+            console.time('netTrained');
+            await net.trainAsync(trainData);
+            console.timeEnd('netTrained');
+            restart();
+            netTrained = true;
+            console.log('=>', 'complite', 'netTrained');
+        }).finally(() => {
+            console.log('=>', 'finally', 'netTrained');
+        });
+    }
+    else if (seePath) {
+        importsJSON(seePath).then((data) => {
+            console.log('=>', 'start', 'netSee', { seePath });
+            net.fromJSON(data);
+            netTrained = true;
+            console.log('=>', 'complite', 'netSee');
+        }).finally(() => {
+            console.log('=>', 'finally', 'netSee');
+        });
+    }
 })();

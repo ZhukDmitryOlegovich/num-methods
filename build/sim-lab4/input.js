@@ -1,4 +1,4 @@
-import { imports } from '../utils/imports.js';
+import { importsJSON } from '../utils/imports.js';
 import { parseHash } from '../utils/parseHash.js';
 function createGraph3d(data, el) {
     const options2 = {
@@ -69,7 +69,7 @@ const getKorilation = (arr, i) => {
         return createGraph3d(data, outputWrapper);
     })();
     const calc = () => {
-        imports('./parsed_data.json').then((bigData) => {
+        importsJSON('./parsed_data.json').then((bigData) => {
             const data = new vis.DataSet();
             console.log(bigData);
             const printQuartile = !!(+parseHash().qvartile || 0);

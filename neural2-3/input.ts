@@ -1,4 +1,4 @@
-import { imports } from '@/utils/imports';
+import { importsJSON } from '@/utils/imports';
 import { parseHash } from '@/utils/parseHash';
 
 declare let vis: any;
@@ -54,7 +54,7 @@ function createGraph3d(data: any, el: HTMLElement) {
 
 		console.log({ k, fromX, pr });
 
-		imports(filename).then((bigData) => {
+		importsJSON(filename).then((bigData) => {
 			const data = new vis.DataSet();
 			console.log(bigData);
 

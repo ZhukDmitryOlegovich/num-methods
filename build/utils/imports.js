@@ -1,6 +1,6 @@
 const cashe = {};
 /* eslint-disable import/prefer-default-export */
-export const imports = (a) => {
+export const importsJSON = (a) => {
     cashe[a] ?? (cashe[a] = fetch(a, {
         headers: {
             Accept: 'application/json',

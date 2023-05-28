@@ -26,6 +26,7 @@
 		"typescript": "^4.9.5"
 	},
 	"dependencies": {
+		"brain.js": "^2.0.0-beta.23",
 		"function-plot": "^1.22.9-0",
 		"vis-graph3d": "^5.5.2"
 	}
