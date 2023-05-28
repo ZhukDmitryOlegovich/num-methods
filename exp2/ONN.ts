@@ -1,6 +1,8 @@
 import { M1, M2 } from './Matrix';
 import { sum } from './sum';
 
+const TwoPi = 2 * Math.PI;
+
 export class ONN {
 	public phi: M1;
 
@@ -30,10 +32,10 @@ export class ONN {
 		const {
 			phi, K, f, N,
 		} = this;
-		this.dphi = phi.map((_, i) => 2 * Math.PI * (
+		this.dphi = phi.map((_, i) => TwoPi * (
 			f[i] + sum(N, (j) => K[i][j] * Math.sin(phi[j] - phi[i]))
 		));
-		this.phi = phi.map((_, i) => phi[i] + t * this.dphi[i]);
+		this.phi = phi.map((_, i) => (phi[i] + t * this.dphi[i]) % TwoPi);
 		// const dphi = phi.map((_, i) => 2 * Math.PI * (
 		// 	f[i] + sum(N, (j) => K[i][j] * Math.sin(phi[j] - phi[i]))
 		// ));

@@ -1,4 +1,5 @@
 import { sum } from './sum.js';
+const TwoPi = 2 * Math.PI;
 export class ONN {
     constructor(K, f, initPhi) {
         this.K = K;
@@ -15,8 +16,8 @@ export class ONN {
     }
     step(t) {
         const { phi, K, f, N, } = this;
-        this.dphi = phi.map((_, i) => 2 * Math.PI * (f[i] + sum(N, (j) => K[i][j] * Math.sin(phi[j] - phi[i]))));
-        this.phi = phi.map((_, i) => phi[i] + t * this.dphi[i]);
+        this.dphi = phi.map((_, i) => TwoPi * (f[i] + sum(N, (j) => K[i][j] * Math.sin(phi[j] - phi[i]))));
+        this.phi = phi.map((_, i) => (phi[i] + t * this.dphi[i]) % TwoPi);
         // const dphi = phi.map((_, i) => 2 * Math.PI * (
         // 	f[i] + sum(N, (j) => K[i][j] * Math.sin(phi[j] - phi[i]))
         // ));
