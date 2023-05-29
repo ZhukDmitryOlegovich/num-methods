@@ -66,6 +66,20 @@ const rand = (() => {
         hidePath.innerHTML = visiblePath ? '👀' : '🕶️';
     };
     div.appendChild(hidePath);
+    if (+parseHash().hidePath) {
+        hidePath.click();
+    }
+    const hideCheckpoint = document.createElement('button');
+    let visibleCheckpoint = true;
+    hideCheckpoint.innerHTML = '✔️';
+    hideCheckpoint.onclick = () => {
+        visibleCheckpoint = !visibleCheckpoint;
+        hideCheckpoint.innerHTML = visibleCheckpoint ? '✔️' : '❌';
+    };
+    div.appendChild(hideCheckpoint);
+    if (+parseHash().hideCheckpoint) {
+        hideCheckpoint.click();
+    }
     const hideEye = document.createElement('button');
     let visibleEye = true;
     hideEye.innerHTML = '🦇';
@@ -74,6 +88,9 @@ const rand = (() => {
         hideEye.innerHTML = visibleEye ? '🦇' : '🚗';
     };
     div.appendChild(hideEye);
+    if (+parseHash().hideEye) {
+        hideEye.click();
+    }
     const useBotButton = document.createElement('button');
     let useBot = true;
     useBotButton.innerHTML = '🦾';
@@ -82,6 +99,9 @@ const rand = (() => {
         useBotButton.innerHTML = useBot ? '🦾' : '💪';
     };
     div.appendChild(useBotButton);
+    if (+parseHash().people) {
+        useBotButton.click();
+    }
     const restartButton = document.createElement('button');
     restartButton.innerHTML = '🔄';
     div.appendChild(restartButton);
@@ -93,6 +113,9 @@ const rand = (() => {
         restartLoopButton.innerHTML = restartLoop ? '1️⃣' : '♾️';
     };
     div.appendChild(restartLoopButton);
+    if (+parseHash().inf) {
+        restartLoopButton.click();
+    }
     node.appendChild(div);
     const fps = document.createElement('code');
     fps.style.marginBottom = '1em';
@@ -219,7 +242,7 @@ const rand = (() => {
                 drawPath(line, { close: false, color: hoverIndex === i ? 'lightgreen' : 'black', lineWidth: hoverIndex === i ? 3 : 1 });
             });
         }
-        if (visiblePath) {
+        if (visibleCheckpoint) {
             checkpoints.forEach((line, index) => {
                 drawPath(line, {
                     close: false,
