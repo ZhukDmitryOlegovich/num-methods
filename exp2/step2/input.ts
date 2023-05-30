@@ -641,6 +641,9 @@ let netTrained = false;
 			console.timeEnd('netTrained');
 			restart();
 			netTrained = true;
+			if (!useBot) {
+				useBotButton.click();
+			}
 			console.log('=>', 'complite', 'netTrained');
 		}).finally(() => {
 			console.log('=>', 'finally', 'netTrained');

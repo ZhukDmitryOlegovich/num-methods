@@ -14,7 +14,6 @@ const net = new brain.NeuralNetwork({
     iterations: 2000 * (+parseHash().iter || 1),
     learningRate: +parseHash().rate || 0.2,
 });
-/** split file */
 // @ts-ignore
 window.net = net;
 const useONN = !!+parseHash().onn;
@@ -378,13 +377,15 @@ let netTrained = false;
     const checkCollision = () => {
         const x = w / 2;
         const y = h / 2;
-        const $moveToCar = (point) => point.$rotate(car.angle).$move(car.position);
+        const moveToCar = (point) => new Point(...point)
+            .$rotate(car.angle)
+            .$move(car.position);
         const carPoints = [
             [x, y],
             [x, -y],
             [-x, -y],
             [-x, y],
-        ].map((data) => new Point(...data)).map($moveToCar);
+        ].map(moveToCar);
         carEyes = [
             [[x, 0], 0],
             [[x, y], Math.PI / 12],
@@ -397,8 +398,7 @@ let netTrained = false;
             ? [data]
             : [data, [[data[0][0], -data[0][1]], -data[1]]]))
             .map(([data, a]) => {
-            const p1 = new Point(...data);
-            $moveToCar(p1);
+            const p1 = moveToCar(data);
             const p2 = p1.clone().$move(Vector.Polar(depthEye, a + car.angle));
             return [p1.toArr(), p2.toArr()];
         });
@@ -508,11 +508,6 @@ let netTrained = false;
                     output,
                 };
             });
-            // random position
-            // normalData.sort(() => rand() - 0.5);
-            // if (+parseHash().reverse) {
-            // 	normalData.reverse();
-            // }
             const norm2 = (x) => typeof x === 'number' && 0 <= x && x <= 1;
             const norm = (x) => Array.isArray(x) && x.every(norm2);
             console.log(normalData.find(({ input, output }) => !(norm(input) && norm(output))));
@@ -525,6 +520,9 @@ let netTrained = false;
             console.timeEnd('netTrained');
             restart();
             netTrained = true;
+            if (!useBot) {
+                useBotButton.click();
+            }
             console.log('=>', 'complite', 'netTrained');
         }).finally(() => {
             console.log('=>', 'finally', 'netTrained');
