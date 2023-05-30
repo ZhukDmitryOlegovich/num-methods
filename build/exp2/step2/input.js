@@ -3,6 +3,7 @@ import { importsJSON } from '../../utils/imports.js';
 import { parseHash } from '../../utils/parseHash.js';
 import { keyController } from '../contoller.js';
 import { intersects } from '../intersects.js';
+import { ONN } from '../ONN.js';
 import { Car, Point, Vector } from './Car.js';
 import { checkpoints, left, right, } from './path.js';
 // type Net = InstanceType<typeof brain.NeuralNetwork>;
@@ -13,19 +14,21 @@ const net = new brain.NeuralNetwork({
     iterations: 2000 * (+parseHash().iter || 1),
     learningRate: +parseHash().rate || 0.2,
 });
+/** split file */
 // @ts-ignore
 window.net = net;
-let netTrained = false;
-// eslint-disable-next-line no-unused-vars
-const rand = (() => {
-    let next = 0;
-    const mod = 2 ** 31;
-    return (newNext) => {
-        next = newNext || next;
-        next = (next * 1103515245 + 12345) % mod;
-        return next / mod;
+const useONN = !!+parseHash().onn;
+if (useONN) {
+    // @ts-ignore
+    net.overrideLayerType = ONN;
+    const originToJSON = net.toJSON;
+    net.toJSON = function toJSON(...args) {
+        const data = originToJSON.apply(this, args);
+        data.type = 'ONN';
+        return data;
     };
-})();
+}
+let netTrained = false;
 (() => {
     const node = document.getElementById('step2-input');
     const canvas = document.getElementById('step2-canvas');
@@ -149,9 +152,7 @@ const rand = (() => {
         dspeed: 2 * s,
         angle: -Math.PI / 2,
     });
-    const OK = 'red';
-    // const FAIL = 'green';
-    const carColor = OK;
+    const carColor = 'red';
     const drawCar = () => {
         const cx = car.position.x;
         const cy = car.position.y;
@@ -345,9 +346,6 @@ const rand = (() => {
     }, 300);
     const dataForNeural = [];
     const bigData = [];
-    // setInterval(() => {
-    // 	dataForNeural.push({ in: [...neuralValueInput], out: [...neuralValueOutput] });
-    // }, 10);
     const at = (arr, index) => arr[((index % arr.length) + arr.length) % arr.length];
     const length2 = (x1, y1, x2, y2) => (x1 - x2) ** 2 + (y1 - y2) ** 2;
     let wasFinish = false;
@@ -535,6 +533,15 @@ const rand = (() => {
     else if (seePath) {
         importsJSON(seePath).then((data) => {
             console.log('=>', 'start', 'netSee', { seePath });
+            if (useONN) {
+                if (data.type !== 'ONN') {
+                    throw new TypeError('incorrect type, waited ONN');
+                }
+            }
+            else if (data.type !== 'NeuralNetwork') {
+                throw new TypeError('incorrect type, waited NeuralNetwork');
+            }
+            data.type = 'NeuralNetwork';
             net.fromJSON(data);
             netTrained = true;
             console.log('=>', 'complite', 'netSee');

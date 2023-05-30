@@ -67,7 +67,7 @@ import { rAF } from '../rAF';
 		to: number, t: number,
 	) => {
 		const bigData: [number, number][][] = [];
-		const onn = new ONN(K, f, initPhi);
+		const onn = new ONN(K, f, t, initPhi);
 
 		const saveDate = (now: number) => {
 			onn.dphi.forEach((dphi, i) => {
@@ -78,7 +78,7 @@ import { rAF } from '../rAF';
 		let now = 0;
 		saveDate(now);
 		for (let i = 0; now <= to; i += 1, now = t * i) {
-			onn.step(t);
+			onn.step();
 			saveDate(now);
 		}
 

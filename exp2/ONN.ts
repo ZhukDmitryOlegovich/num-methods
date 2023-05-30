@@ -1,4 +1,4 @@
-import { M1, M2 } from './Matrix';
+import type { M1, M2 } from './Matrix';
 import { sum } from './sum';
 
 const TwoPi = 2 * Math.PI;
@@ -13,6 +13,7 @@ export class ONN {
 	constructor(
 		public K: M2,
 		public f: M1,
+		public t: number,
 		initPhi?: M1,
 	) {
 		this.N = f.length;
@@ -28,17 +29,27 @@ export class ONN {
 		this.dphi = [...f];
 	}
 
-	step(t: number) {
+	step() {
 		const {
-			phi, K, f, N,
+			phi, K, f, N, t,
 		} = this;
 		this.dphi = phi.map((_, i) => TwoPi * (
 			f[i] + sum(N, (j) => K[i][j] * Math.sin(phi[j] - phi[i]))
 		));
 		this.phi = phi.map((_, i) => (phi[i] + t * this.dphi[i]) % TwoPi);
-		// const dphi = phi.map((_, i) => 2 * Math.PI * (
-		// 	f[i] + sum(N, (j) => K[i][j] * Math.sin(phi[j] - phi[i]))
-		// ));
-		// this.phi = phi.map((_, i) => phi[i] + t * (dphi[i] - phi[i]));
+	}
+
+	run() {
+		this.step();
+		return this.phi;
+	}
+
+	matrix() {
+		return this.K;
+	}
+
+	// eslint-disable-next-line class-methods-use-this
+	derivative(x: number, y: number) {
+		return Math.asin(y);
 	}
 }

@@ -105,7 +105,7 @@ export class Car {
         // Сопротивление
         const s = this.speed;
         const r = this.options.resistance * t;
-        this.speed = (Math.abs(s - r) - Math.abs(s + r)) / 2 + s; // чтобы не колебатся в нуле
+        this.speed = (Math.abs(s - r) - Math.abs(s + r)) / 2 + s;
         // Направление
         if (this.direction) {
             this.speed = between(this.speed + this.getDirection() * this.options.dspeed * t, this.options.maxSpeed);

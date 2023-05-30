@@ -1,5 +1,5 @@
 {
-    "type": "NeuralNetwork",
+    "type": "ONN",
     "sizes": [
         11,
         6,

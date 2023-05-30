@@ -44,7 +44,7 @@ import { rAF } from '../rAF.js';
     };
     const getONNBigData = (K, f, initPhi, to, t) => {
         const bigData = [];
-        const onn = new ONN(K, f, initPhi);
+        const onn = new ONN(K, f, t, initPhi);
         const saveDate = (now) => {
             onn.dphi.forEach((dphi, i) => {
                 (bigData[i] ?? (bigData[i] = [])).push([now, dphi / (2 * Math.PI)]);
@@ -53,7 +53,7 @@ import { rAF } from '../rAF.js';
         let now = 0;
         saveDate(now);
         for (let i = 0; now <= to; i += 1, now = t * i) {
-            onn.step(t);
+            onn.step();
             saveDate(now);
         }
         return bigData;

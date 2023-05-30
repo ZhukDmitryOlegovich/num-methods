@@ -5,6 +5,7 @@ import { parseHash } from '@/utils/parseHash';
 
 import { keyController } from '../contoller';
 import { intersects } from '../intersects';
+import { ONN } from '../ONN';
 import { Car, Point, Vector } from './Car';
 import {
 	checkpoints,
@@ -20,22 +21,22 @@ const net = new brain.NeuralNetwork<number[], number[]>({
 	iterations: 2000 * (+parseHash().iter || 1),
 	learningRate: +parseHash().rate || 0.2,
 });
+
 // @ts-ignore
 window.net = net;
+const useONN = !!+parseHash().onn;
+if (useONN) {
+	// @ts-ignore
+	net.overrideLayerType = ONN;
+	const originToJSON = net.toJSON;
+	net.toJSON = function toJSON(...args) {
+		const data = originToJSON.apply(this, args);
+		data.type = 'ONN';
+		return data;
+	};
+}
 
 let netTrained = false;
-
-// eslint-disable-next-line no-unused-vars
-const rand = (() => {
-	let next = 0;
-	const mod = 2 ** 31;
-
-	return (newNext?: number) => {
-		next = newNext || next;
-		next = (next * 1103515245 + 12345) % mod;
-		return next / mod;
-	};
-})();
 
 (() => {
 	const node = document.getElementById('step2-input');
@@ -202,9 +203,7 @@ const rand = (() => {
 		angle: -Math.PI / 2,
 	});
 
-	const OK = 'red';
-	// const FAIL = 'green';
-	const carColor = OK;
+	const carColor = 'red';
 
 	const drawCar = () => {
 		const cx = car.position.x;
@@ -427,9 +426,6 @@ const rand = (() => {
 
 	const dataForNeural: { in: number[], out: number[]; }[] = [];
 	const bigData: { in: number[], out: number[]; }[] = [];
-	// setInterval(() => {
-	// 	dataForNeural.push({ in: [...neuralValueInput], out: [...neuralValueOutput] });
-	// }, 10);
 
 	const at = <Arr extends any[]>(arr: Arr, index: number): Arr[number] => arr[
 		((index % arr.length) + arr.length) % arr.length
@@ -474,14 +470,16 @@ const rand = (() => {
 		const x = w / 2;
 		const y = h / 2;
 
-		const $moveToCar = (point: Point) => point.$rotate(car.angle).$move(car.position);
+		const moveToCar = (point: SPoint) => new Point(...point)
+			.$rotate(car.angle)
+			.$move(car.position);
 
 		const carPoints = ([
 			[x, y],
 			[x, -y],
 			[-x, -y],
 			[-x, y],
-		] as const).map((data) => new Point(...data)).map($moveToCar);
+		] as SPoint[]).map(moveToCar);
 
 		type Eye = [SPoint, number][];
 
@@ -497,8 +495,7 @@ const rand = (() => {
 				? [data]
 				: [data, [[data[0][0], -data[0][1]], -data[1]]]))
 			.map(([data, a]): SLine => {
-				const p1 = new Point(...data);
-				$moveToCar(p1);
+				const p1 = moveToCar(data);
 				const p2 = p1.clone().$move(Vector.Polar(depthEye, a + car.angle));
 				return [p1.toArr(), p2.toArr()];
 			});
@@ -628,12 +625,6 @@ const rand = (() => {
 				};
 			});
 
-			// random position
-			// normalData.sort(() => rand() - 0.5);
-			// if (+parseHash().reverse) {
-			// 	normalData.reverse();
-			// }
-
 			const norm2 = (x: unknown): x is number => typeof x === 'number' && 0 <= x && x <= 1;
 			const norm = (x: unknown): x is number[] => Array.isArray(x) && x.every(norm2);
 
@@ -657,6 +648,16 @@ const rand = (() => {
 	} else if (seePath) {
 		importsJSON<any>(seePath).then((data) => {
 			console.log('=>', 'start', 'netSee', { seePath });
+
+			if (useONN) {
+				if (data.type !== 'ONN') {
+					throw new TypeError('incorrect type, waited ONN');
+				}
+			} else if (data.type !== 'NeuralNetwork') {
+				throw new TypeError('incorrect type, waited NeuralNetwork');
+			}
+
+			data.type = 'NeuralNetwork';
 			net.fromJSON(data);
 			netTrained = true;
 			console.log('=>', 'complite', 'netSee');
