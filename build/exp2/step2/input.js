@@ -5,7 +5,7 @@ import { keyController } from '../contoller.js';
 import { intersects } from '../intersects.js';
 import { ONN } from '../ONN.js';
 import { Car, Point, Vector } from './Car.js';
-import { checkpoints, left, right, } from './path.js';
+import { checkpoints, paths, } from './path.js';
 // type Net = InstanceType<typeof brain.NeuralNetwork>;
 // type Data = Parameters<Net['train']>[0];
 const net = new brain.NeuralNetwork({
@@ -14,8 +14,10 @@ const net = new brain.NeuralNetwork({
     iterations: 2000 * (+parseHash().iter || 1),
     learningRate: +parseHash().rate || 0.2,
 });
-// @ts-ignore
+/* eslint-enable */
 window.net = net;
+window.paths = paths;
+window.checkpoints = checkpoints;
 const useONN = !!+parseHash().onn;
 if (useONN) {
     // @ts-ignore
@@ -118,6 +120,22 @@ let netTrained = false;
     if (+parseHash().inf) {
         restartLoopButton.click();
     }
+    let indexTrack = 2;
+    let selCheckpoint = window.checkpoints[indexTrack];
+    let selPath = window.paths[indexTrack];
+    const changeTracktButton = document.createElement('button');
+    const pref = '🏎️';
+    const number = ['1️⃣', '2️⃣', '3️⃣'];
+    changeTracktButton.innerHTML = pref + number[indexTrack];
+    changeTracktButton.onclick = () => {
+        restart();
+        indexTrack += 1;
+        indexTrack %= window.paths.length;
+        selCheckpoint = window.checkpoints[indexTrack];
+        selPath = window.paths[indexTrack];
+        changeTracktButton.innerHTML = pref + (number[indexTrack] || indexTrack + 1);
+    };
+    div.appendChild(changeTracktButton);
     node.appendChild(div);
     const fps = document.createElement('code');
     fps.style.marginBottom = '1em';
@@ -172,26 +190,44 @@ let netTrained = false;
             x: x + w - miniW - 1, y: y + h - miniH - 1, w: miniW, h: miniH, cx, cy, a,
         });
     };
-    // const arrPoints: SLine[] = [];
-    // let lastPoint: SPoint | null = null;
-    // canvas.addEventListener('click', (e) => {
-    // 	if (e.ctrlKey) {
-    // 		if (lastPoint) {
-    // 			lastPoint = null;
-    // 		} else if (arrPoints.length !== 0) {
-    // 			[lastPoint] = arrPoints.pop()!;
-    // 		}
-    // 		return;
-    // 	}
-    // 	const point: SPoint = [e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop];
-    // 	if (lastPoint) {
-    // 		arrPoints.push([lastPoint, point]);
-    // 		lastPoint = null;
-    // 	} else {
-    // 		lastPoint = point;
-    // 	}
-    // 	console.log(arrPoints);
-    // });
+    const isClickCheck = parseHash().click === 'check';
+    const isClickPath = parseHash().click === 'path';
+    const arrCheck = [];
+    if (isClickCheck) {
+        let lastPoint = null;
+        canvas.addEventListener('click', (e) => {
+            if (e.ctrlKey) {
+                if (lastPoint) {
+                    lastPoint = null;
+                }
+                else if (arrCheck.length !== 0) {
+                    [lastPoint] = arrCheck.pop();
+                }
+                return;
+            }
+            const point = [e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop];
+            if (lastPoint) {
+                arrCheck.push([lastPoint, point]);
+                lastPoint = null;
+            }
+            else {
+                lastPoint = point;
+            }
+            console.log('==>', arrCheck);
+        });
+    }
+    const arrPoints = [];
+    if (isClickPath) {
+        canvas.addEventListener('click', (e) => {
+            if (e.ctrlKey) {
+                arrPoints.pop();
+                return;
+            }
+            const point = [e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop];
+            arrPoints.push(point);
+            console.log('==>', arrPoints);
+        });
+    }
     const drawPath = (points, options = {}) => {
         if (!points.length) {
             return;
@@ -231,8 +267,10 @@ let netTrained = false;
         var _a, _b, _c, _d, _e;
         drawCar();
         if (visiblePath) {
-            drawPath(left, { close: true });
-            drawPath(right, { close: true });
+            selPath.forEach((path) => drawPath(path, { close: true }));
+        }
+        if (isClickPath) {
+            drawPath(arrPoints, { close: true });
         }
         collision.forEach((line) => {
             drawPath(line, { close: false, color: 'lightgrey' });
@@ -243,7 +281,7 @@ let netTrained = false;
             });
         }
         if (visibleCheckpoint) {
-            checkpoints.forEach((line, index) => {
+            selCheckpoint.forEach((line, index) => {
                 drawPath(line, {
                     close: false,
                     color: index === nextCheckpointIndex
@@ -251,6 +289,15 @@ let netTrained = false;
                         : index === nowCheckpointIndex
                             ? chN
                             : chF,
+                    lineWidth: 3,
+                });
+            });
+        }
+        if (isClickCheck) {
+            arrCheck.forEach((line) => {
+                drawPath(line, {
+                    close: false,
+                    color: chOK,
                     lineWidth: 3,
                 });
             });
@@ -349,8 +396,8 @@ let netTrained = false;
     const length2 = (x1, y1, x2, y2) => (x1 - x2) ** 2 + (y1 - y2) ** 2;
     let wasFinish = false;
     const restart = () => {
-        wasFinish = countOkCheckpoints >= 50;
-        if (countOkCheckpoints >= 50) {
+        wasFinish = countOkCheckpoints >= selCheckpoint.length;
+        if (countOkCheckpoints >= selCheckpoint.length) {
             bigData.push(...dataForNeural);
             console.log('=>', bigData);
             if (restartLoop) {
@@ -409,11 +456,9 @@ let netTrained = false;
             .map((point, i, arr) => [point, at(arr, i + 1)]);
         const checkCollisionByLines = (line) => carCollision
             .some((carLine) => intersects(carLine, line));
-        const allCheckColisionLine = [
-            left, right,
-        ].flatMap(createLinesWithClosePath);
+        const allCheckColisionLine = selPath.flatMap(createLinesWithClosePath);
         collision = allCheckColisionLine.filter(checkCollisionByLines);
-        const findIndexCheckpointCollision = checkpoints.findIndex(checkCollisionByLines);
+        const findIndexCheckpointCollision = selCheckpoint.findIndex(checkCollisionByLines);
         if (findIndexCheckpointCollision !== -1
             && nowCheckpointIndex !== findIndexCheckpointCollision) {
             if (findIndexCheckpointCollision === nextCheckpointIndex) {
@@ -423,7 +468,7 @@ let netTrained = false;
                 countNotOkCheckpoints++;
             }
             nowCheckpointIndex = findIndexCheckpointCollision;
-            nextCheckpointIndex = (nowCheckpointIndex + 1) % checkpoints.length;
+            nextCheckpointIndex = (nowCheckpointIndex + 1) % selCheckpoint.length;
         }
         carEyesCollision = carEyes.map((line) => allCheckColisionLine.reduce((ans, oLine) => {
             const inter = intersects(line, oLine);
@@ -435,7 +480,9 @@ let netTrained = false;
             }
             return ans;
         }, null));
-        if (collision.length || countNotOkCheckpoints !== 0 || countOkCheckpoints >= 50) {
+        if (collision.length
+            || countNotOkCheckpoints !== 0
+            || countOkCheckpoints >= selCheckpoint.length) {
             restart();
         }
         // carColor = collision.length === 0 ? OK : FAIL;
