@@ -152,20 +152,20 @@ let netTrained = false;
 		restartLoopButton.click();
 	}
 
-	let indexTrack = 2;
+	let indexTrack = 0;
 	let selCheckpoint = window.checkpoints[indexTrack];
 	let selPath = window.paths[indexTrack];
 	const changeTracktButton = document.createElement('button');
 	const pref = '🏎️';
-	const number = ['1️⃣', '2️⃣', '3️⃣'];
-	changeTracktButton.innerHTML = pref + number[indexTrack];
+	const makeNum = (n: number) => n.toFixed(0).split('').map((nn) => String.fromCharCode(+nn + 48, 65039, 8419)).join('');
+	changeTracktButton.innerHTML = pref + makeNum(indexTrack + 1);
 	changeTracktButton.onclick = () => {
 		restart();
 		indexTrack += 1;
 		indexTrack %= window.paths.length;
 		selCheckpoint = window.checkpoints[indexTrack];
 		selPath = window.paths[indexTrack];
-		changeTracktButton.innerHTML = pref + (number[indexTrack] || indexTrack + 1);
+		changeTracktButton.innerHTML = pref + makeNum(indexTrack + 1);
 	};
 	div.appendChild(changeTracktButton);
 
