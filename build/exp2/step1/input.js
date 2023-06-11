@@ -2,11 +2,13 @@
 import { fromLength } from '../../math/utils.js';
 import { ONN } from '../ONN.js';
 import { rAF } from '../rAF.js';
+import { parseHash } from '../../utils/parseHash.js';
 (() => {
     const node = document.getElementById('step1-input');
     const plot = document.getElementById('step1-plot');
     const plot2 = document.getElementById('step1-plot2');
-    if (!node || !plot || !plot2) {
+    const plots = document.getElementById('step1-plots');
+    if (!node || !plot || !plot2 || !plots) {
         console.error('fail not found');
         return;
     }
@@ -119,6 +121,7 @@ import { rAF } from '../rAF.js';
         return functionPlot(bigOptions);
     };
     button2.onclick = () => {
+        plots.style.filter = +parseHash().contrast ? 'brightness(0)' : '';
         const startFrom = Date.now();
         const initPhi = Array.from({ length: 10 }, (_, i) => Math.random() * 2 * Math.PI);
         const t = inputT.valueAsNumber;
