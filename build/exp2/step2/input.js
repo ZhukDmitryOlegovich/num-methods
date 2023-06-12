@@ -10,7 +10,7 @@ import { checkpoints, paths, } from './path.js';
 // type Data = Parameters<Net['train']>[0];
 const net = new brain.NeuralNetwork({
     activation: 'sigmoid',
-    hiddenLayers: [6],
+    hiddenLayers: [+parseHash().hiddenLayers || 6],
     iterations: 2000 * (+parseHash().iter || 1),
     learningRate: +parseHash().rate || 0.2,
 });

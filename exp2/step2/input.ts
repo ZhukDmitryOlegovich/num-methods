@@ -16,7 +16,7 @@ import {
 
 const net = new brain.NeuralNetwork<number[], number[]>({
 	activation: 'sigmoid',
-	hiddenLayers: [6],
+	hiddenLayers: [+parseHash().hiddenLayers || 6],
 	iterations: 2000 * (+parseHash().iter || 1),
 	learningRate: +parseHash().rate || 0.2,
 });
